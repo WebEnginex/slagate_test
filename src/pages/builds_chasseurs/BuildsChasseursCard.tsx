@@ -213,6 +213,17 @@ export default function BuildChasseurCard({
     onToggle(newIsOpen); // Notifier le parent du changement
   }, [isOpen, onToggle]);
 
+  // Vérification de sécurité pour build
+  if (!builds || builds.length === 0 || !build) {
+    return (
+      <Card className="bg-sidebar border-sidebar-border mb-4">
+        <CardContent className="p-4">
+          <p className="text-gray-400 text-center">Aucun build disponible pour ce chasseur</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card
       id={`chasseur-${chasseur.id}`} // Ajoute cet id pour l'ancre
@@ -246,8 +257,9 @@ export default function BuildChasseurCard({
           {/* Sélecteur de build */}
           <div className="flex gap-2 sm:gap-3 lg:gap-4 overflow-x-auto pb-2">
             {builds.map((b, i) => {
-              const firstArtefact = Object.values(b.artefacts)[0];
-              const art = getById(artefacts, firstArtefact?.id);
+              // Utiliser l'artefact "casque" pour l'image du build, sinon fallback sur le premier artefact
+              const casqueArtefact = b.artefacts.casque || Object.values(b.artefacts)[0];
+              const art = getById(artefacts, casqueArtefact?.id);
               
               // Si l'artefact n'est pas trouvé et qu'il n'y a aucun artefact chargé, 
               // c'est probablement que les données sont en cours de chargement
@@ -306,21 +318,27 @@ export default function BuildChasseurCard({
             </p>
 
             {/* Grille des statistiques */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-              {Object.entries(build.stats).map(([label, val]) => (
-                <div
-                  key={label}
-                  className="bg-sidebar p-2 sm:p-3 rounded border border-sidebar-border"
-                >
-                  <div className="text-[10px] sm:text-xs lg:text-sm text-solo-light-purple mb-1">
-                    {label}
+            {build && build.stats ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+                {Object.entries(build.stats).map(([label, val]) => (
+                  <div
+                    key={label}
+                    className="bg-sidebar p-2 sm:p-3 rounded border border-sidebar-border"
+                  >
+                    <div className="text-[10px] sm:text-xs lg:text-sm text-solo-light-purple mb-1">
+                      {label}
+                    </div>
+                    <div className="font-medium text-xs sm:text-sm lg:text-base text-white break-words">
+                      {val}
+                    </div>
                   </div>
-                  <div className="font-medium text-xs sm:text-sm lg:text-base text-white break-words">
-                    {val}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-gray-400 text-sm">Aucune statistique disponible pour ce build</p>
+              </div>
+            )}
           </SectionCollapsible>
 
           {/* Artefacts */}

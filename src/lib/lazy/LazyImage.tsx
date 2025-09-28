@@ -93,14 +93,13 @@ export const LazyImage: React.FC<LazyImageProps> = ({
 
   // 🎨 Rendu du composant avec spinner centré et corrections
   return (
-    <div ref={ref} className={`relative ${fallbackClassName}`} style={{ position: 'relative', overflow: 'hidden' }}>
+    <div ref={ref} className={`relative ${fallbackClassName} ${className}`} style={{ position: 'relative', overflow: 'hidden' }}>
       {/* Image chargée */}
       {imageSrc && !isLoading && (
         <img
           src={imageSrc}
           alt={alt}
-          className={`${className}`}
-          style={{ display: 'block', width: '100%', height: 'auto' }}
+          className="w-full h-full object-cover"
           onError={() => {
             setHasError(true);
           }}

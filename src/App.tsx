@@ -19,6 +19,17 @@ const AtelierDeLaLumiere = lazy(() => import("@/pages/AtelierDeLaLumiere"));
 const TierList = lazy(() => import("@/pages/TierList"));
 const Guides = lazy(() => import("@/pages/Guides"));
 
+// Pages d'administration avec authentification
+const BuildsAdmin = lazy(() => import("@/admin/AdminBuildsPage"));
+const AdminDashboard = lazy(() => import("@/admin/AdminDashboard"));
+const PromoCodesAdmin = lazy(() => import("@/admin/pages/promo-codes/PromoCodesAdminPage"));
+const TierListAdmin = lazy(() => import("@/admin/pages/tier-list/TierListAdminPage"));
+const LatestChasseursAdmin = lazy(() => import("@/admin/pages/latest-chasseurs/LatestChasseursAdminPage"));
+
+// Import des composants d'authentification admin
+import { AdminProtection } from "@/admin/auth/components/AdminProtection";
+import { AdminLogin } from "@/admin/auth/components/AdminLogin";
+
 // Imports directs pour les pages plus légères
 import Prochainement from "@/pages/Prochainement"; 
 import Portal from "@/pages/guides/portals/Portals";
@@ -70,6 +81,55 @@ const App = () => (
           <Route path="/builds" element={
             <Suspense fallback={<LoadingFallback />}>
               <Builds />
+            </Suspense>
+          } />
+
+          {/* Pages d'administration avec authentification */}
+          <Route path="/admin" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <AdminDashboard />
+              </Suspense>
+            </AdminProtection>
+          } />
+          
+          <Route path="/admin/builds" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <BuildsAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+          
+          <Route path="/admin/promo-codes" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <PromoCodesAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+          
+          <Route path="/admin/tier-list" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <TierListAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          {/* Onglet Derniers chasseurs */}
+          <Route path="/admin/latest-chasseurs" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <LatestChasseursAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+          
+          {/* Route de connexion admin pour test */}
+          <Route path="/admin/login" element={
+            <Suspense fallback={<LoadingFallback />}>
+              <AdminLogin />
             </Suspense>
           } />
           

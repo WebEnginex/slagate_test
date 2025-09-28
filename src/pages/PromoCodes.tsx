@@ -18,6 +18,8 @@ import LastModified from "@/components/LastModified";
 import { lastModifiedDates } from "@/config/last-modification-date/lastModifiedDates";
 import SEO from "@/components/SEO";
 import LazyImage from "@/lib/lazy";
+import { PublicPromoCodesService } from "@/services/public-promo-codes-service";
+import { formatPromoCodesForPublic, type PublicPromoCode } from "@/utils/promo-codes-formatter";
 
 type SocialLink = {
   type: "youtube" | "twitch" | "twitter" | "instagram" | "website" | "tiktok";
@@ -71,105 +73,12 @@ const getSocialIcon = (type: SocialLink["type"]) => {
     <LazyImage
       src={iconMap[type]}
       alt={type}
-      className ="h-5 w-5"
+      className="h-5 w-5"
       showSpinner={false}
       fallbackClassName="h-5 w-5"
     />
   );
 };
-
-// Mettre les récompenses en listes
-const promoCodes = [
-  
-  {
-    code: "AUG28THUD",
-    rewards: [
-    "Cristal abyssal x5",
-    "Traces d’ombre x100",
-    "Cristal de mana de palier inférieur x1.000",],
-    date: "25 Septembre à 16h59",
-  },
-  {
-    code: "2NDIDLECOLLAB",
-    rewards: [
-      "Ticket de tirage personnalisé x10",
-      "Matériel d’amélioration d’arme III x50"],
-    date: "25 Septembre à 16h59",
-  },
-  {
-    code: "HAPPY500TH",
-    rewards: [
-      "Fragment de rune x1.000",
-      "Poudre de bénédiction x500",
-      "Gold x 1.000.000",
-    ],
-    date: "25 Septembre à 16h59",
-  },
-  {
-    code: "CMIRON500GIFT",
-    rewards: [
-      "Fragment de rune x500",
-      "Cristal de mana de palier inférieur x500",
-      "Gold x 1.000.000",
-    ],
-    date: "22 octobre à 1h59",
-  },
-  {
-    code: "SUNGFAMILY",
-    rewards: [
-      "Esprit Abyssal x5",
-      "Energie de l'ombre x1.000",
-    ],
-    date: "22 octobre à 1h59",
-  },
-  {
-    code: "FATHERSUNG",
-    rewards: [
-      "Pierre transcendée : Coffre de rune de compétence x10",
-      "Fragments de rune x10",
-    ],
-    date: "22 octobre à 1h59",
-  },
-  {
-    code: "SORRYFORBUG",
-    rewards: [
-      "Gold x 10.000.000",
-    ],
-    date: "23 Octobre à 1h59",
-  },
-  {
-    code: "NEWEAPONS",
-    rewards: [
-      "Ticket d'arme x10",
-      "Potion d'amélioration d'arme x50",
-    ],
-    date: "23 Octobre à 1h59",
-  },
-  {
-    code: "S3PUPDATE",
-    rewards: [
-      "Cristaux de mana avancé x100",
-      "Marteaux violets x200",
-    ],
-    date: "23 Octobre à 1h59",
-  },
-  {
-    code: "FALLUPDAT3",
-    rewards: [
-      "Essence stone x1.000",
-      "Livres d'enchantement x10",
-    ],
-    date: "23 Octobre à 1h59",
-  },
-  {
-    code: "SUNGILHWAN0925",
-    rewards: [
-      "Ticket de tirage personalisé x10",
-    ],
-    date: "31 octobre à 1h59",
-  },
-  
-];
 
 // Fonction pour formatter le texte avec mise en évidence des mots entre guillemets
 const formatDescription = (text: React.ReactNode) => {
@@ -219,7 +128,7 @@ const PAGE_ID = "PromoCodes";
 // Composant Memo pour les cartes de codes promo
 // =========================
 const PromoCard = React.memo(({ promo, onCopy, copiedCode }: {
-  promo: typeof promoCodes[0];
+  promo: PublicPromoCode;
   onCopy: (code: string) => void;
   copiedCode: string | null;
 }) => (
@@ -251,6 +160,11 @@ PromoCard.displayName = "PromoCard";
 // Composant principal
 // =========================
 const PromoCodes = () => {
+  // État pour les codes promo chargés depuis Supabase
+  const [promoCodes, setPromoCodes] = React.useState<PublicPromoCode[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
   // État simplifié : code copié + modal + étape ouverte
   const [state, setState] = React.useState<{
     copiedCode: string | null;
@@ -261,6 +175,7 @@ const PromoCodes = () => {
     modalImage: null,
     openStep: 0,
   });
+
   const steps = [
     {
       title: "Lancez le jeu Solo Leveling: Arise",
@@ -305,6 +220,36 @@ const PromoCodes = () => {
       image: "/images/code_promo/tuto_pomo_code_7.webp",
     },
   ];
+
+  // =========================
+  // Chargement des codes promo depuis Supabase
+  // =========================
+  React.useEffect(() => {
+    const loadPromoCodes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const promoCodesWithRewards = await PublicPromoCodesService.getAllPromoCodes();
+        const formattedCodes = formatPromoCodesForPublic(promoCodesWithRewards);
+        
+        setPromoCodes(formattedCodes);
+        
+        // Log de développement
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`🎫 ${PAGE_ID}: ${formattedCodes.length} codes promo chargés depuis Supabase`);
+          console.log(`🎫 ${PAGE_ID}: Codes:`, formattedCodes.map(c => c.code).join(', '));
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement des codes promo:', err);
+        setError('Impossible de charger les codes promo. Veuillez réessayer plus tard.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPromoCodes();
+  }, []);
 
   // Log de développement pour valider l'implémentation
   if (process.env.NODE_ENV === 'development') {
@@ -354,10 +299,10 @@ const PromoCodes = () => {
   return (
     <Layout>
       <SEO
-  title="Codes Promotionnels - Solo Leveling: ARISE"
-  description="Découvrez les derniers codes promotionnels pour Solo Leveling: ARISE. Obtenez des récompenses gratuites en utilisant ces codes avant leur expiration."
-  keywords="Solo Leveling, ARISE, codes promo, récompenses, SLAGATE, codes promotionnels, cadeaux gratuits"
-/>
+        title="Codes Promotionnels - Solo Leveling: ARISE"
+        description="Découvrez les derniers codes promotionnels pour Solo Leveling: ARISE. Obtenez des récompenses gratuites en utilisant ces codes avant leur expiration."
+        keywords="Solo Leveling, ARISE, codes promo, récompenses, SLAGATE, codes promotionnels, cadeaux gratuits"
+      />
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">Codes Promotionnels</h1>
         <p className="">
@@ -416,16 +361,44 @@ const PromoCodes = () => {
           {/* Ajout de la date de dernière modification */}
           <LastModified date={lastModifiedDates.promoCodes} />
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-          {promoCodes.map((promo, index) => (
-            <PromoCard
-              key={index}
-              promo={promo}
-              onCopy={handleCopy}
-              copiedCode={state.copiedCode}
-            />
-          ))}
-        </div>
+        
+        {/* Gestion du loading */}
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-solo-purple mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Chargement des codes promo...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Gestion des erreurs */}
+        {error && !loading && (
+          <div className="bg-red-900/20 border border-red-500 rounded-lg p-4">
+            <p className="text-red-400">{error}</p>
+          </div>
+        )}
+
+        {/* Affichage des codes promo */}
+        {!loading && !error && promoCodes.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+            {promoCodes.map((promo, index) => (
+              <PromoCard
+                key={promo.code}
+                promo={promo}
+                onCopy={handleCopy}
+                copiedCode={state.copiedCode}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Message si aucun code */}
+        {!loading && !error && promoCodes.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Aucun code promo disponible pour le moment.</p>
+          </div>
+        )}
       </div>
 
       {/* Guide étape par étape */}

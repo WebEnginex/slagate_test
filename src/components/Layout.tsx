@@ -5,9 +5,10 @@ import Footer from "./Footer";
 
 type LayoutProps = {
   children: React.ReactNode;
+  hideFooter?: boolean;
 };
 
-const Layout = ({ children }: LayoutProps) => {
+const Layout = ({ children, hideFooter = false }: LayoutProps) => {
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
 
   return (
@@ -29,7 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
           
         </main>
 
-        <Footer />
+        {!hideFooter && <Footer />}
       </div>
     </div>
   );

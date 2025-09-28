@@ -53,46 +53,36 @@ const HunterCard = ({
 // Composant principal
 // =========================
 const Index = () => {
-  // IDs explicites pour chaque slot
-  const chasseur1 = 48;
-  const chasseur2 = 49;
-  const chasseur3 = 50;
-  const hunterIds = [chasseur1, chasseur2, chasseur3];
+  // Récupérer les 3 derniers chasseurs choisis dans le dashboard admin
+  const { data: latestChasseurs, loading: loadingLatest, error: errorLatest } = useSupabaseFetch<
+    { chasseur_id: number; position: number }[]
+  >(
+    "supabase:latest_chasseurs",
+    async () => {
+      const result = await supabase
+        .from("latest_chasseurs")
+        .select("chasseur_id, position")
+        .order("position");
+      return result.data || [];
+    },
+    { refreshInterval: 0 }
+  );
 
-  // Utilisation de useSupabaseFetch pour récupérer les chasseurs
+  // Récupérer les infos des chasseurs sélectionnés
+  const hunterIds = latestChasseurs?.map((c) => c.chasseur_id) || [];
   const { data: hunters, loading, error } = useSupabaseFetch<
     { id: number; nom: string; image: string }[]
   >(
     `supabase:chasseurs:${hunterIds.join(",")}`,
     async () => {
-      if (process.env.NODE_ENV === "development") {
-        console.log("🏠 Index: Chargement des chasseurs depuis Supabase...");
-      }
+      if (!hunterIds.length) return [];
       const result = await supabase
         .from("chasseurs")
         .select("id, nom, image")
         .in("id", hunterIds);
-
-      if (process.env.NODE_ENV === "development") {
-        console.log(
-          `🏠 Index: ✅ ${result.data?.length || 0} chasseurs récupérés de Supabase`
-        );
-        // Debug: afficher les URLs des images
-        result.data?.forEach((hunter) => {
-          console.log(
-            `🏠 Index: Chasseur ${hunter.nom} - Image: ${hunter.image?.substring(
-              0,
-              50
-            )}...`
-          );
-        });
-      }
-
       return result.data || [];
     },
-    {
-      refreshInterval: 0,
-    }
+    { refreshInterval: 0 }
   );
 
   if (process.env.NODE_ENV === "development") {
@@ -107,18 +97,20 @@ const Index = () => {
     }
   }
 
-  if (loading) {
+  if (loadingLatest || loading) {
     return <div>Chargement des chasseurs...</div>;
   }
 
-  if (error) {
+  if (errorLatest || error) {
     return <div>Erreur lors du chargement des chasseurs.</div>;
   }
 
   // Ordre d'affichage strict : 1 à gauche, 2 au centre, 3 à droite (desktop)
-  const orderedHunters = [chasseur1, chasseur2, chasseur3]
-    .map((id) => hunters?.find((h) => h.id === id))
-    .filter(Boolean) as { id: number; nom: string; image: string }[];
+  const orderedHunters = latestChasseurs
+  ? latestChasseurs
+    .map((item) => hunters?.find((h) => h.id === item.chasseur_id))
+    .filter(Boolean) as { id: number; nom: string; image: string }[]
+    : [];
 
   return (
     <Layout>

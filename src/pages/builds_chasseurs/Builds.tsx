@@ -2,7 +2,6 @@ import Layout from "@/components/Layout";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { buildsChasseurs } from "@/config/builds/buildsChasseurs";
 import BuildChasseurCard from "./BuildsChasseursCard";
 import LastModified from "@/components/LastModified";
 import { lastModifiedDates } from "@/config/last-modification-date/lastModifiedDates";
@@ -12,6 +11,99 @@ import { useLocation } from "react-router-dom";
 import SEO from "@/components/SEO";
 import LazyImage from '@/lib/lazy';
 import { useSupabaseFetch } from '@/lib';
+
+// Types pour les données de builds Supabase
+interface BuildArtefact {
+  id: number;
+  rank?: string;
+  level?: number;
+  type?: string;
+  element?: number;
+  statPrincipale?: string;
+  statsSecondaires?: string[];
+}
+
+interface BuildNoyau {
+  id: number;
+  level?: number;
+  statPrincipale?: string;
+  statSecondaire?: string;
+}
+
+interface BuildSetBonus {
+  id: number;
+  setId?: number;
+  level?: number;
+}
+
+interface BuildFromSupabase {
+  artefacts: Record<string, BuildArtefact>;
+  noyaux: Record<string, BuildNoyau[] | BuildNoyau>;
+  sets_bonus: BuildSetBonus[];
+  ombre?: number;
+  stats?: Record<string, string>;
+}
+
+interface BuildsDataFromSupabase {
+  builds: Record<string, BuildFromSupabase>;
+}
+
+// Type pour le format attendu par BuildsChasseursCard
+interface LegacyBuild {
+  id: number;
+  nom: string;
+  stats: Record<string, string>;
+  artefacts: {
+    [slot: string]: {
+      id: number;
+      statPrincipale: string;
+      statsSecondaires: string[];
+    };
+  };
+  noyaux: {
+    [slot: number]: {
+      id: number;
+      statPrincipale: string;
+      statSecondaire?: string;
+    }[];
+  };
+  sets_bonus: { id: number }[];
+}
+
+// Fonction pour transformer les données Supabase vers le format legacy
+function transformSupabaseBuildToLegacy(supabaseBuild: BuildFromSupabase, buildId: number, buildName: string): LegacyBuild {
+  // Transformer les artefacts en préservant les vraies données
+  const transformedArtefacts: { [slot: string]: { id: number; statPrincipale: string; statsSecondaires: string[]; } } = {};
+  Object.entries(supabaseBuild.artefacts || {}).forEach(([slot, art]) => {
+    transformedArtefacts[slot] = {
+      id: art.id,
+      statPrincipale: art.statPrincipale || "-", // Préserver la vraie statPrincipale
+      statsSecondaires: art.statsSecondaires || ["-"], // Préserver les vraies statsSecondaires
+    };
+  });
+
+  // Transformer les noyaux en préservant les vraies données
+  const transformedNoyaux: { [slot: number]: { id: number; statPrincipale: string; statSecondaire?: string; }[] } = {};
+  Object.entries(supabaseBuild.noyaux || {}).forEach(([slot, noyauList]) => {
+    const slotNumber = parseInt(slot, 10);
+    // Vérifier si noyauList est un tableau, sinon le convertir
+    const noyauxArray = Array.isArray(noyauList) ? noyauList : [noyauList];
+    transformedNoyaux[slotNumber] = noyauxArray.map(noyau => ({
+      id: noyau.id,
+      statPrincipale: noyau.statPrincipale || "-", // Préserver la vraie statPrincipale
+      statSecondaire: noyau.statSecondaire || undefined, // Préserver la vraie statSecondaire
+    }));
+  });
+
+  return {
+    id: buildId,
+    nom: buildName, // Utiliser le nom de la clé, pas le champ "nom" redondant
+    stats: supabaseBuild.stats || {}, // Préserver les vraies stats
+    artefacts: transformedArtefacts,
+    noyaux: transformedNoyaux,
+    sets_bonus: supabaseBuild.sets_bonus || [],
+  };
+}
 
 export default function BuildsPage() {
   // =========================
@@ -36,9 +128,34 @@ export default function BuildsPage() {
   type SetBonus = Omit<Database["public"]["Tables"]["sets_bonus"]["Row"], "created_at"> & {
     created_at?: string;
   };
+  type BuildsData = Database["public"]["Tables"]["builds"]["Row"];
+
+  // Type pour un build individuel extrait du JSON
+  type Build = {
+    id: number;
+    nom: string;
+    stats: Record<string, string>;
+    artefacts: {
+      [slot: string]: {
+        id: number;
+        statPrincipale: string;
+        statsSecondaires: string[];
+      };
+    };
+    noyaux: {
+      [slot: string]: {
+        id: number;
+        statPrincipale: string;
+        statSecondaire?: string;
+      }[];
+    };
+    sets_bonus: { id: number }[];
+    ombre?: number;
+  };
 
   // États pour les données de base
   const [chasseurs, setChasseurs] = useState<Chasseur[]>([]);
+  const [builds, setBuilds] = useState<BuildsData[]>([]);
   const [artefacts, setArtefacts] = useState<Artefact[]>([]);
   const [noyaux, setNoyaux] = useState<Noyau[]>([]);
   const [ombres, setOmbres] = useState<Ombre[]>([]);
@@ -101,7 +218,15 @@ export default function BuildsPage() {
   const { data: chasseursData } = useSupabaseFetch('supabase:chasseurs', async () => {
     const { data } = await supabase
       .from("chasseurs")
-      .select("id, nom, image, element, rarete");
+      .select("id, nom, image, image_body, element, rarete, last_modified");
+    return data;
+  });
+
+  // Utiliser useSupabaseFetch pour charger les builds depuis Supabase
+  const { data: buildsData } = useSupabaseFetch('supabase:builds', async () => {
+    const { data } = await supabase
+      .from("builds")
+      .select("*");
     return data;
   });
 
@@ -116,12 +241,16 @@ export default function BuildsPage() {
     
     // Si pas de cache, charger depuis Supabase
     try {
-      // Obtenir les builds associés à ce chasseur
-      const chasseurBuild = buildsChasseurs.find(b => b.chasseurId === chasseurId);
+      // Obtenir les builds associés à ce chasseur depuis la table builds
+      const chasseurBuild = builds.find(b => b.chasseur_id === chasseurId);
       if (!chasseurBuild) {
         console.log(`❌ Pas de build trouvé pour le chasseur #${chasseurId}`);
         return;
       }
+      
+      // Extraire les builds du JSON builds_data
+      const buildsData = chasseurBuild.builds_data as unknown as BuildsDataFromSupabase;
+      const chasseurBuilds = Object.values(buildsData.builds || {});
       
       // Récupérer les IDs des artefacts, noyaux, ombres et sets utilisés dans les builds
       const artefactIds = new Set<number>();
@@ -129,16 +258,18 @@ export default function BuildsPage() {
       const ombreIds = new Set<number>();
       const setBonusIds = new Set<number>();
       
-      chasseurBuild.builds.forEach(build => {
+      chasseurBuilds.forEach((build: BuildFromSupabase) => {
         // Collecter les IDs des artefacts
-        Object.values(build.artefacts).forEach(art => {
-          artefactIds.add(art.id);
+        Object.values(build.artefacts || {}).forEach((art: BuildArtefact) => {
+          if (art && art.id) artefactIds.add(art.id);
         });
         
         // Collecter les IDs des noyaux
-        Object.values(build.noyaux).forEach(noyauList => {
-          noyauList.forEach(noyau => {
-            noyauIds.add(noyau.id);
+        Object.values(build.noyaux || {}).forEach((noyauList: BuildNoyau[] | BuildNoyau) => {
+          // Vérifier si noyauList est un tableau, sinon le convertir
+          const noyauxArray = Array.isArray(noyauList) ? noyauList : [noyauList];
+          noyauxArray.forEach((noyau: BuildNoyau) => {
+            if (noyau && noyau.id) noyauIds.add(noyau.id);
           });
         });
         
@@ -146,7 +277,11 @@ export default function BuildsPage() {
         if (build.ombre) ombreIds.add(build.ombre);
         
         // Collecter les IDs des sets bonus
-        build.sets_bonus.forEach(set => setBonusIds.add(set.id));
+        if (Array.isArray(build.sets_bonus)) {
+          build.sets_bonus.forEach((set: BuildSetBonus) => {
+            if (set && set.id) setBonusIds.add(set.id);
+          });
+        }
       });
       
       // Préparer les conteneurs pour les données récupérées
@@ -161,7 +296,7 @@ export default function BuildsPage() {
       if (artefactIds.size > 0) {
         const { data: artefactData } = await supabase
           .from("artefacts")
-          .select("id, nom, image, categorie")
+          .select("id, nom, image, categorie, last_modified")
           .in("id", Array.from(artefactIds));
         
         if (artefactData && artefactData.length > 0) {
@@ -186,7 +321,7 @@ export default function BuildsPage() {
       if (noyauIds.size > 0) {
         const { data: noyauData } = await supabase
           .from("noyaux")
-          .select("id, nom, image, description")
+          .select("id, nom, image, description, last_modified")
           .in("id", Array.from(noyauIds));
         
         if (noyauData && noyauData.length > 0) {
@@ -211,7 +346,7 @@ export default function BuildsPage() {
       if (ombreIds.size > 0) {
         const { data: ombreData } = await supabase
           .from("ombres")
-          .select("id, nom, image, description")
+          .select("id, nom, image, description, last_modified")
           .in("id", Array.from(ombreIds));
         
         if (ombreData && ombreData.length > 0) {
@@ -236,7 +371,7 @@ export default function BuildsPage() {
       if (setBonusIds.size > 0) {
         const { data: setBonusData } = await supabase
           .from("sets_bonus")
-          .select("id, nom, description")
+          .select("id, nom, description, last_modified")
           .in("id", Array.from(setBonusIds));
         
         if (setBonusData && setBonusData.length > 0) {
@@ -263,7 +398,7 @@ export default function BuildsPage() {
     } catch (error) {
       console.error(`❌ Erreur lors du chargement des données pour le chasseur #${chasseurId}:`, error);
     }
-  }, [loadedChasseurs]);
+  }, [loadedChasseurs, builds]);
   
   // Fonction pour gérer l'ouverture/fermeture d'un onglet de chasseur
   const handleChasseurToggle = (chasseurId: number, isOpen: boolean) => {
@@ -288,6 +423,12 @@ export default function BuildsPage() {
     if (chasseursData) {
       console.log(`🏗️ ${PAGE_ID}: ${chasseursData.length} chasseurs chargés via SWR`);
     }
+    if (buildsData) {
+      console.log(`🏗️ ${PAGE_ID}: ${buildsData.length} builds chargés via SWR`);
+      console.log(`🏗️ ${PAGE_ID}: Builds data:`, buildsData);
+    }
+    console.log(`🏗️ ${PAGE_ID}: Chasseurs state:`, chasseurs.length);
+    console.log(`🏗️ ${PAGE_ID}: Builds state:`, builds.length);
   }
 
   // Synchroniser les données SWR avec l'état local (pour compatibilité avec le code existant)
@@ -296,6 +437,12 @@ export default function BuildsPage() {
       setChasseurs(chasseursData);
     }
   }, [chasseursData]);
+
+  useEffect(() => {
+    if (buildsData) {
+      setBuilds(buildsData);
+    }
+  }, [buildsData]);
 
   // Gestion du scroll vers l'ancre après chargement des chasseurs
   useEffect(() => {
@@ -332,8 +479,8 @@ export default function BuildsPage() {
   }, [chasseurs]);
 
   // Utiliser l'index pour filtrer les builds
-  const filteredBuilds = buildsChasseurs.filter((entry) => {
-    const chasseur = chasseurIndex.get(entry.chasseurId);
+  const filteredBuilds = builds.filter((entry) => {
+    const chasseur = chasseurIndex.get(entry.chasseur_id);
     if (!chasseur) return false;
 
     const matchSearch = chasseur.nom
@@ -343,6 +490,21 @@ export default function BuildsPage() {
 
     return matchSearch && matchElement;
   });
+
+  // Debug pour voir les données
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔍 Debug filtrage:`, {
+      buildsTotal: builds.length,
+      chasseursTotal: chasseurs.length,
+      filteredBuilds: filteredBuilds.length,
+      search,
+      selectedElement,
+      chasseurIndexSize: chasseurIndex.size
+    });
+    if (builds.length > 0) {
+      console.log(`🔍 Premier build:`, builds[0]);
+    }
+  }
 
   return (
     <Layout>
@@ -437,22 +599,36 @@ export default function BuildsPage() {
             <div className="mt-6">
               {filteredBuilds.map((entry) => {
                 const chasseur = chasseurs.find(
-                  (c) => c.id === entry.chasseurId
+                  (c) => c.id === entry.chasseur_id
                 );
                 if (!chasseur) return null;
 
+                // Extraire les builds du JSON builds_data
+                const buildsData = entry.builds_data as unknown as BuildsDataFromSupabase;
+                const chasseurBuildsRaw = Object.entries(buildsData.builds || {});
+                
+                // Transformer les builds vers le format legacy
+                const chasseurBuilds = chasseurBuildsRaw.map(([buildKey, buildData], index) => 
+                  transformSupabaseBuildToLegacy(buildData, index + 1, buildKey)
+                );
+
+                // Ne pas afficher les chasseurs sans builds
+                if (!chasseurBuilds || chasseurBuilds.length === 0) {
+                  return null;
+                }
+
                 return (
                   <BuildChasseurCard
-                    key={entry.chasseurId}
+                    key={entry.chasseur_id}
                     chasseur={chasseur}
-                    builds={entry.builds}
+                    builds={chasseurBuilds}
                     artefacts={artefacts}
                     noyaux={noyaux}
                     ombres={ombres}
                     setsBonus={setsBonus}
                     elementId={entry.element}
-                    isOpen={openChasseurs.has(entry.chasseurId)}
-                    onToggle={(isOpen) => handleChasseurToggle(entry.chasseurId, isOpen)}
+                    isOpen={openChasseurs.has(entry.chasseur_id)}
+                    onToggle={(isOpen) => handleChasseurToggle(entry.chasseur_id, isOpen)}
                   />
                 );
               })}

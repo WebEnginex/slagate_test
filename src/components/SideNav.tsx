@@ -1,27 +1,31 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, BookOpen, Award, Gift, Users, Menu, X, Flame, Shield, Swords, Skull } from "lucide-react";
+import { Home, BookOpen, Award, Gift, Users, Menu, X, Flame, Shield, Swords, Skull, Settings, LogIn } from "lucide-react";
+import { useAuth } from "@/admin/auth/hooks/useAuth";
 
 type NavItemProps = {
   to: string;
   icon: React.ReactNode;
   label: string;
   isActive: boolean;
+  className?: string;
 };
 
-const NavItem = ({ to, icon, label, isActive }: NavItemProps) => {
+const NavItem = ({ to, icon, label, isActive, className }: NavItemProps) => {
   return (
-    <Link
-      to={to}
-      className={cn(
-        "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent",
-        isActive && "bg-sidebar-accent text-solo-purple"
-      )}
-    >
-      <span className="text-xl">{icon}</span>
-      <span className="font-medium">{label}</span>
-    </Link>
+    <div className={className}>
+      <Link
+        to={to}
+        className={cn(
+          "flex items-center gap-3 rounded-md px-3 py-2 text-sidebar-foreground transition-colors hover:bg-sidebar-accent",
+          isActive && "bg-sidebar-accent text-solo-purple"
+        )}
+      >
+        <span className="text-xl">{icon}</span>
+        <span className="font-medium">{label}</span>
+      </Link>
+    </div>
   );
 };
 
@@ -30,21 +34,51 @@ type SideNavProps = {
   setIsMobileOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+// Navigation items de base (statiques)
+const baseNavItems = [
+  { to: "/", icon: <Home size={20} />, label: "Accueil" },
+  { to: "/guides", icon: <BookOpen size={20} />, label: "Guides" }, 
+  { to: "/tier-list", icon: <Award size={20} />, label: "Tier List" },
+  { to: "/builds", icon: <Shield size={20} />, label: "Builds" }, 
+  { to: "/atelier", icon: <Flame size={20} />, label: "Atelier" },
+  { to: "/ennio", icon: <Swords size={20} />, label: "Ennio" },
+  { to: "/bdg", icon: <Skull size={20} />, label: "Boss de Guilde" },
+  { to: "/promo-codes", icon: <Gift size={20} />, label: "Code Promo" },
+  { to: "/creators", icon: <Users size={20} />, label: "Creators" },
+];
+
 const SideNav = ({ isMobileOpen, setIsMobileOpen }: SideNavProps) => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { user, loading, isAuthenticated } = useAuth();
 
-  const navItems = [
-    { to: "/", icon: <Home size={20} />, label: "Accueil" },
-    { to: "/guides", icon: <BookOpen size={20} />, label: "Guides" }, 
-    { to: "/tier-list", icon: <Award size={20} />, label: "Tier List" },
-    { to: "/builds", icon: <Shield size={20} />, label: "Builds" }, 
-    { to: "/atelier", icon: <Flame size={20} />, label: "Atelier" },
-    { to: "/ennio", icon: <Swords size={20} />, label: "Ennio" },
-    { to: "/bdg", icon: <Skull size={20} />, label: "Boss de Guilde" },
-    { to: "/promo-codes", icon: <Gift size={20} />, label: "Code Promo" },
-    { to: "/creators", icon: <Users size={20} />, label: "Creators" },
-  ];
+  // Debug pour voir l'état d'authentification
+  if (process.env.NODE_ENV === 'development') {
+    console.log('SideNav - Auth state:', { user: !!user, loading, isAuthenticated });
+  }
+
+  // Composant de debug temporaire en développement
+  const DebugAuth = () => {
+    if (process.env.NODE_ENV !== 'development') return null;
+    return (
+      <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-2 rounded text-xs z-50">
+        Auth: {isAuthenticated ? 'Connecté' : 'Non connecté'} | Loading: {loading ? 'Oui' : 'Non'}
+      </div>
+    );
+  };
+
+  // Ajouter les liens selon l'état d'authentification
+  const allNavItems = React.useMemo(() => {
+    if (loading) return baseNavItems; // Pendant le chargement, afficher seulement les liens de base
+    
+    if (isAuthenticated) {
+      // Si connecté : ajouter le lien Administration
+      return [...baseNavItems, { to: "/admin", icon: <Settings size={20} />, label: "Administration" }];
+    } else {
+      // Si non connecté : ajouter le lien Connexion
+      return [...baseNavItems, { to: "/admin/login", icon: <LogIn size={20} />, label: "Connexion" }];
+    }
+  }, [isAuthenticated, loading]);
 
   return (
     <>
@@ -90,18 +124,27 @@ const SideNav = ({ isMobileOpen, setIsMobileOpen }: SideNavProps) => {
 
         {/* Nav links */}
         <div className="mt-8 space-y-1">
-          {navItems.map((item) => (
-            <NavItem
-              key={item.to}
-              to={item.to}
-              icon={item.icon}
-              label={item.label}
-              isActive={currentPath === item.to}
-            />
-          ))}
+          {allNavItems.map((item) => {
+            const isAdminLink = item.to === "/admin" || item.to === "/admin/login";
+            const isActive = currentPath === item.to || 
+              (item.to === "/admin" && currentPath.startsWith("/admin")) ||
+              (item.to === "/admin/login" && currentPath === "/admin/login");
+            
+            return (
+              <NavItem
+                key={item.to}
+                to={item.to}
+                icon={item.icon}
+                label={item.label}
+                isActive={isActive}
+                className={isAdminLink ? "border-t border-sidebar-border pt-2 mt-2" : ""}
+              />
+            );
+          })}
         </div>
 
       </nav>
+      <DebugAuth />
     </>
   );
 };

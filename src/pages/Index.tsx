@@ -54,7 +54,7 @@ const HunterCard = ({
 // =========================
 const Index = () => {
   // Récupérer les 3 derniers chasseurs ajoutés (triés par id décroissant)
-  const { data: hunters, loading, error } = useSupabaseFetch<
+  const { data: hunters, loading, error, mutate } = useSupabaseFetch<
     { id: number; nom: string; image: string }[]
   >(
     "supabase:chasseurs:latest",
@@ -66,8 +66,17 @@ const Index = () => {
         .limit(3);
       return result.data || [];
     },
-    { refreshInterval: 0 }
+    { 
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 1000,
+    }
   );
+
+  // Force la revalidation quand la page se monte
+  React.useEffect(() => {
+    mutate();
+  }, [mutate]);
 
   if (process.env.NODE_ENV === "development") {
     if (loading) {
@@ -81,12 +90,14 @@ const Index = () => {
     }
   }
 
-  if (loading) {
-    return <div>Chargement des chasseurs...</div>;
-  }
-
-  if (error) {
-    return <div>Erreur lors du chargement des chasseurs.</div>;
+  // Si pas de données ET en chargement, afficher message
+  if (!hunters || hunters.length === 0) {
+    if (loading) {
+      return <div>Chargement des chasseurs...</div>;
+    }
+    if (error) {
+      return <div>Erreur lors du chargement des chasseurs.</div>;
+    }
   }
 
   // Ordre d'affichage strict : 1 à gauche, 2 au centre, 3 à droite (desktop)

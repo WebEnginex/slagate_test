@@ -1,3 +1,18 @@
+// Mapping exact des éléments pour l'URL storage
+function getElementImageUrl(element: string | null | undefined): string | null {
+  if (!element) return null;
+  const elementMap: Record<string, string> = {
+    "Feu": "Feu_element.webp",
+    "Eau": "Eau_element.webp",
+    "Vent": "Vent_element.webp",
+    "Lumière": "Lumiere_element.webp",
+    "Ténèbres": "Tenebre_element.webp"
+  };
+  const filename = elementMap[element.trim()];
+  return filename
+    ? `https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/${filename}`
+    : null;
+}
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -63,7 +78,7 @@ export default function TeamsChasseursPublic() {
       return (
         <div
           key={`empty-${index}`}
-          className="bg-sidebar border border-sidebar-border rounded-lg p-3 text-center text-sidebar-foreground/60"
+          className="border border-sidebar-border rounded-lg p-3 text-center text-sidebar-foreground/60 bg-transparent"
         >
           <div className="flex flex-col items-center gap-2">
             <div className="w-12 h-12 bg-sidebar-accent rounded-full flex items-center justify-center">
@@ -75,37 +90,38 @@ export default function TeamsChasseursPublic() {
       );
     }
 
+    // Affiche l'icône d'élément dans le coin supérieur gauche de l'image du chasseur
+    const elementIconUrl = getElementImageUrl(position.chasseur.element);
     return (
       <div
         key={position.id}
-        className="bg-sidebar border border-sidebar-border rounded-lg p-3 hover:bg-sidebar-accent transition-colors"
+        className="relative flex flex-col items-center bg-sidebar-accent border border-sidebar-border rounded-lg shadow-sm p-2 sm:p-3 w-full"
       >
-        <div className="flex flex-col items-center gap-2">
-          {/* Position badge */}
-          <div className="absolute top-1 left-1 bg-solo-purple text-white text-xs px-2 py-1 rounded-full font-bold">
-            {position.position}
-          </div>
-          
-          {/* Image du chasseur */}
-          <div className="relative">
-            <LazyImage
-              src={position.chasseur.imageUrl || "/placeholder.svg"}
-              alt={position.chasseur.nom}
-              className="w-16 h-16 rounded-lg object-cover"
+        <div className="relative flex items-center justify-center w-full">
+          <LazyImage
+            src={position.chasseur.imageUrl || "/placeholder.svg"}
+            alt={position.chasseur.nom}
+            className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-lg object-cover mb-2"
+          />
+          {elementIconUrl && (
+            <img
+              src={elementIconUrl}
+              alt={position.chasseur.element || "Element"}
+              className="absolute top-0 left-0 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 object-contain filter drop-shadow-sm"
+              style={{ backgroundColor: 'transparent', border: 'none', margin: '2px' }}
             />
+          )}
+        </div>
+        {/* Nom du chasseur */}
+        <div className="text-center mt-2 w-full">
+          <div className="text-sm font-semibold text-white truncate">
+            {position.chasseur.nom}
           </div>
-
-          {/* Nom du chasseur */}
-          <div className="text-center">
-            <div className="text-sm font-semibold text-white">
-              {position.chasseur.nom}
+          {position.chasseur.rarete && (
+            <div className="text-xs text-sidebar-foreground/70">
+              {position.chasseur.rarete}
             </div>
-            {position.chasseur.rarete && (
-              <div className="text-xs text-sidebar-foreground/70">
-                {position.chasseur.rarete}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     );
@@ -118,38 +134,60 @@ export default function TeamsChasseursPublic() {
     const RoleIcon = ROLE_CONFIG[role].icon;
 
     return (
-      <Card key={role} className="bg-sidebar border-sidebar-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-white text-lg">
-            <RoleIcon className="h-5 w-5 text-solo-purple" />
-            {ROLE_CONFIG[role].label}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+      <div key={role} className="border border-sidebar-border rounded-lg bg-transparent p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <RoleIcon className="h-5 w-5 text-solo-purple" />
+          <span className="text-white text-lg font-bold">{ROLE_CONFIG[role].label}</span>
+        </div>
+        <div className="space-y-3">
           {positions.length === 0 ? (
             <div className="text-center py-8 text-sidebar-foreground/60">
               <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>Aucun chasseur assigné</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-6">
               {positions.map((position, index) => (
                 <div key={position.id || index} className="text-center">
-                  <div className="text-xs text-sidebar-muted-foreground mb-1 font-medium">
-                    {index === 0 ? 'Optimal' : `Alt. ${index}`}
+                  <div className="text-xs text-solo-purple mb-1 font-bold">
+                    {index === 0 ? 'Optimal' : `Alternative ${index}`}
                   </div>
                   {renderChasseurCard(position, index)}
                 </div>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   };
 
   return (
     <div className="space-y-6">
+      {/* Section d'aide/commentaire */}
+      <div className="bg-sidebar-accent border border-solo-purple rounded-xl p-5 mb-2">
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="h-5 w-5 text-solo-purple" />
+          <span className="text-lg font-bold text-solo-purple">Comment utiliser cette tier list</span>
+        </div>
+        <div className="bg-sidebar rounded-lg p-4 mb-2">
+          <span className="font-bold text-solo-purple">🎯 Principe de base :</span>
+          <span className="ml-2 text-white">Choisissez les chasseurs <span className="text-solo-purple underline">selon ceux que vous possédez</span>. Le premier chasseur de chaque colonne est le plus optimal, mais les alternatives sont parfaitement viables !</span>
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm mb-2">
+          <div className="text-white">
+            <span className="font-bold text-solo-purple">• Position 1 :</span> Chasseur optimal (si vous l'avez)
+          </div>
+          <div className="text-white">
+            <span className="font-bold text-solo-purple">• Position 2+ :</span> Alternatives parfaitement jouables
+          </div>
+          <div className="text-green-400 font-bold">• Astuce : <span className="font-normal text-white">Mélangez les positions selon vos chasseurs</span></div>
+        </div>
+        <div className="bg-blue-900/60 border border-blue-700 rounded px-4 py-2 text-blue-300 font-semibold flex items-center gap-2">
+          <span>💡</span> L'important est d'avoir un chasseur de chaque rôle, pas forcément le meilleur !
+        </div>
+      </div>
+
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-white">Teams Chasseurs</h2>
         <p className="text-sidebar-foreground/70">

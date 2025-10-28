@@ -23,11 +23,6 @@ const navigation = [
     icon: Sword,
   },
   {
-    name: 'Derniers chasseurs',
-    href: '/admin/latest-chasseurs',
-    icon: Users,
-  },
-  {
     name: 'Chasseurs',
     href: '/admin/hunters',
     icon: Users,

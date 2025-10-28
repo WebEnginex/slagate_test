@@ -236,14 +236,14 @@ function HuntersTab() {
               
               {/* Contenu du tier */}
               <div className="p-3 sm:p-4 md:p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {chasseursParTier[tier]
                     .sort((a, b) => a.position - b.position)
                     .map((chasseur) => (
-                      <div key={`${chasseur.id}-${tier}`} className="relative">
+                      <div key={`${chasseur.id}-${tier}`} className="relative flex flex-col items-center">
                         {/* Élément au-dessus de la carte, sans fond */}
                         {getElementImageUrl(chasseur.element) && (
-                          <div className="absolute top-0 left-0 w-6 h-6 z-10 bg-transparent">
+                          <div className="absolute top-1 left-1 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 z-10 bg-transparent">
                             <img
                               src={getElementImageUrl(chasseur.element)!}
                               alt={chasseur.element || "Element"}
@@ -252,13 +252,13 @@ function HuntersTab() {
                             />
                           </div>
                         )}
-                        <div className="bg-sidebar-accent p-3 rounded-lg text-center hover:bg-sidebar-accent/80 transition-colors">
+                        <div className="bg-sidebar-accent p-2 sm:p-3 rounded-lg text-center hover:bg-sidebar-accent/80 transition-colors w-full flex flex-col items-center">
                           <LazyImage
                             src={chasseur.imageUrl || "/placeholder.svg"}
                             alt={chasseur.nom}
-                            className="w-16 h-16 mx-auto rounded-lg object-cover mb-2"
+                            className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-lg object-cover mb-2"
                           />
-                          <p className="text-sm font-medium text-white">{chasseur.nom}</p>
+                          <p className="text-xs sm:text-sm font-medium text-white break-words w-full">{chasseur.nom}</p>
                           {chasseur.rarete && (
                             <p className="text-xs text-sidebar-foreground/70">{chasseur.rarete}</p>
                           )}
@@ -322,15 +322,15 @@ function WeaponsTab() {
           </div>
           
           {/* Contenu du tier */}
-          <div className="p-3 sm:p-4 md:p-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="p-2 sm:p-4 md:p-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {armesParTier[tier]
                 .sort((a, b) => a.position - b.position)
                 .map((arme) => (
-                  <div key={`${arme.id}-${tier}`} className="relative">
+                  <div key={`${arme.id}-${tier}`} className="relative flex flex-col items-center">
                     {/* Élément au-dessus de la carte, sans fond */}
                     {getElementImageUrl(arme.element) && (
-                      <div className="absolute top-0 left-0 w-6 h-6 z-10 bg-transparent">
+                      <div className="absolute top-1 left-1 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 z-10 bg-transparent">
                         <img
                           src={getElementImageUrl(arme.element)!}
                           alt={arme.element || "Element"}
@@ -339,13 +339,13 @@ function WeaponsTab() {
                         />
                       </div>
                     )}
-                    <div className="bg-sidebar-accent p-3 rounded-lg text-center hover:bg-sidebar-accent/80 transition-colors">
+                    <div className="bg-sidebar-accent p-2 sm:p-3 rounded-lg text-center hover:bg-sidebar-accent/80 transition-colors w-full flex flex-col items-center">
                       <LazyImage
                         src={arme.image || "/placeholder.svg"}
                         alt={arme.nom}
-                        className="w-16 h-16 mx-auto rounded-lg object-cover mb-2"
+                        className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-lg object-cover mb-2"
                       />
-                      <p className="text-sm font-medium text-white">{arme.nom}</p>
+                      <p className="text-xs sm:text-sm font-medium text-white break-words w-full">{arme.nom}</p>
                     </div>
                   </div>
                 ))}

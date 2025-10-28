@@ -36,7 +36,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   src,
   alt,
   className = "",
-  fallbackClassName = "bg-gray-800", // Fond noir/gris par défaut
+  fallbackClassName = "", // Pas de fond par défaut
   showSpinner = true, // Spinner activé par défaut
   threshold = 0.1,
   rootMargin = "50px",
@@ -99,7 +99,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
         <img
           src={imageSrc}
           alt={alt}
-          className="w-full h-full object-cover"
+          className={`w-full h-full ${className}`}
           onError={() => {
             setHasError(true);
           }}

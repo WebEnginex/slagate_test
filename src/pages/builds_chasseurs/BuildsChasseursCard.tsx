@@ -238,7 +238,7 @@ export default function BuildChasseurCard({
             <LazyImage
               src={chasseur.image}
               alt={chasseur.nom}
-              fallbackClassName="w-full h-full object-cover bg-gray-800"
+              fallbackClassName="w-full h-full object-cover "
               showSpinner={true}
             />
           </Avatar>
@@ -290,7 +290,7 @@ export default function BuildChasseurCard({
                         src={art?.image || ""}
                         alt={b.nom}
                         className="w-full h-full object-contain rounded-lg"
-                        fallbackClassName="w-full h-full bg-gray-800 rounded-lg"
+                        fallbackClassName="w-full h-full rounded-lg"
                         showSpinner={true}
                       />
                     )}
@@ -483,9 +483,9 @@ export default function BuildChasseurCard({
                             <LazyImage
                               key={`noyau-${slotNumber}-${activeIndex}-${renderKey}`}
                               src={noyauData?.image || ""}
-                              className="max-w-full max-h-full object-contain"
+                              className="w-full h-full object-contain rounded"
                               alt={noyauData?.nom || "Noyau"}
-                              fallbackClassName="w-full h-full bg-transparent"
+                              fallbackClassName="w-full h-full object-contain rounded bg-transparent"
                               showSpinner={true}
                             />
                           )}

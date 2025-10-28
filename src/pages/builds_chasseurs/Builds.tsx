@@ -11,6 +11,7 @@ import { useLocation } from "react-router-dom";
 import SEO from "@/components/SEO";
 import LazyImage from '@/lib/lazy';
 import { useSupabaseFetch } from '@/lib';
+import { AlertTriangle } from "lucide-react";
 
 // Types pour les données de builds Supabase
 interface BuildArtefact {
@@ -434,7 +435,13 @@ export default function BuildsPage() {
   // Synchroniser les données SWR avec l'état local (pour compatibilité avec le code existant)
   useEffect(() => {
     if (chasseursData) {
-      setChasseurs(chasseursData);
+      // Ajoute le champ 'element_chasseur' pour correspondre au type Chasseur
+      setChasseurs(
+        chasseursData.map((c) => ({
+          ...c,
+          element_chasseur: c.element,
+        }))
+      );
     }
   }, [chasseursData]);
 
@@ -545,6 +552,12 @@ export default function BuildsPage() {
                   </span>
                 </p>
               </div>
+            </div>
+
+            {/* Section builds en cours d'ajout */}
+            <div className="bg-yellow-900/80 border border-yellow-700 rounded-xl p-4 mb-2 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-400" />
+              <span className="text-yellow-200 font-semibold">Les builds sont en cours d'ajout. Il est normal que tous les builds ne soient pas encore présents !</span>
             </div>
 
             {/* Barre de recherche et filtres */}

@@ -17,11 +17,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const adminNavItems = [
-    { to: "/admin", label: "Dashboard", exact: true },
-    { to: "/admin/builds", label: "Builds" },
-    { to: "/admin/latest-chasseurs", label: "Derniers chasseurs" },
-    { to: "/admin/promo-codes", label: "Codes Promo" },
-    { to: "/admin/tier-list", label: "Tier List" },
+  { to: "/admin", label: "Dashboard", exact: true },
+  { to: "/admin/builds", label: "Builds" },
+  { to: "/admin/promo-codes", label: "Codes Promo" },
+  { to: "/admin/tier-list", label: "Tier List" },
   ];
 
   const handleSignOut = async () => {

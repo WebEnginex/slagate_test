@@ -24,7 +24,6 @@ const BuildsAdmin = lazy(() => import("@/admin/AdminBuildsPage"));
 const AdminDashboard = lazy(() => import("@/admin/AdminDashboard"));
 const PromoCodesAdmin = lazy(() => import("@/admin/pages/promo-codes/PromoCodesAdminPage"));
 const TierListAdmin = lazy(() => import("@/admin/pages/tier-list/TierListAdminPage"));
-const LatestChasseursAdmin = lazy(() => import("@/admin/pages/latest-chasseurs/LatestChasseursAdminPage"));
 
 // Import des composants d'authentification admin
 import { AdminProtection } from "@/admin/auth/components/AdminProtection";
@@ -117,14 +116,6 @@ const App = () => (
             </AdminProtection>
           } />
 
-          {/* Onglet Derniers chasseurs */}
-          <Route path="/admin/latest-chasseurs" element={
-            <AdminProtection>
-              <Suspense fallback={<LoadingFallback />}>
-                <LatestChasseursAdmin />
-              </Suspense>
-            </AdminProtection>
-          } />
           
           {/* Route de connexion admin pour test */}
           <Route path="/admin/login" element={

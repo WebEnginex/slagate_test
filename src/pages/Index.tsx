@@ -53,33 +53,17 @@ const HunterCard = ({
 // Composant principal
 // =========================
 const Index = () => {
-  // Récupérer les 3 derniers chasseurs choisis dans le dashboard admin
-  const { data: latestChasseurs, loading: loadingLatest, error: errorLatest } = useSupabaseFetch<
-    { chasseur_id: number; position: number }[]
-  >(
-    "supabase:latest_chasseurs",
-    async () => {
-      const result = await supabase
-        .from("latest_chasseurs")
-        .select("chasseur_id, position")
-        .order("position");
-      return result.data || [];
-    },
-    { refreshInterval: 0 }
-  );
-
-  // Récupérer les infos des chasseurs sélectionnés
-  const hunterIds = latestChasseurs?.map((c) => c.chasseur_id) || [];
+  // Récupérer les 3 derniers chasseurs ajoutés (triés par id décroissant)
   const { data: hunters, loading, error } = useSupabaseFetch<
     { id: number; nom: string; image: string }[]
   >(
-    `supabase:chasseurs:${hunterIds.join(",")}`,
+    "supabase:chasseurs:latest",
     async () => {
-      if (!hunterIds.length) return [];
       const result = await supabase
         .from("chasseurs")
         .select("id, nom, image")
-        .in("id", hunterIds);
+        .order("id", { ascending: false })
+        .limit(3);
       return result.data || [];
     },
     { refreshInterval: 0 }
@@ -97,20 +81,16 @@ const Index = () => {
     }
   }
 
-  if (loadingLatest || loading) {
+  if (loading) {
     return <div>Chargement des chasseurs...</div>;
   }
 
-  if (errorLatest || error) {
+  if (error) {
     return <div>Erreur lors du chargement des chasseurs.</div>;
   }
 
   // Ordre d'affichage strict : 1 à gauche, 2 au centre, 3 à droite (desktop)
-  const orderedHunters = latestChasseurs
-  ? latestChasseurs
-    .map((item) => hunters?.find((h) => h.id === item.chasseur_id))
-    .filter(Boolean) as { id: number; nom: string; image: string }[]
-    : [];
+  const orderedHunters = hunters || [];
 
   return (
     <Layout>

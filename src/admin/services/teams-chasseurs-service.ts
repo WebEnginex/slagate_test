@@ -145,24 +145,39 @@ export class TeamsChasseursService {
    * Réorganise les positions d'un rôle dans un élément donné
    */
   static async reorderPositions(
-    element: ElementType, 
-    role: RoleType, 
-    newOrder: { id: string; position: number }[]
+  element: ElementType, 
+  role: RoleType, 
+  newOrder: { id: string; chasseur_id: number; element: ElementType; role: RoleType; position: number }[]
   ): Promise<void> {
-    // Effectuer les mises à jour en transaction
-    const updates = newOrder.map(({ id, position }) => 
-      supabase
-        .from('tier_list_teams_chasseurs')
-        .update({ position, updated_at: new Date().toISOString() })
-        .eq('id', id)
-    );
+    // 1. Supprimer toutes les positions du rôle/élément
+    const { error: deleteError } = await supabase
+      .from('tier_list_teams_chasseurs')
+      .delete()
+      .eq('element', element)
+      .eq('role', role);
 
-    const results = await Promise.all(updates);
-    
-    for (const { error } of results) {
-      if (error) {
-        console.error('Erreur lors de la réorganisation:', error);
-        throw new Error(`Erreur lors de la réorganisation: ${error.message}`);
+    if (deleteError) {
+      console.error('Erreur lors de la suppression des positions pour reorder:', deleteError);
+      throw new Error(`Erreur lors de la suppression pour reorder: ${deleteError.message}`);
+    }
+
+    // 2. Réinsérer toutes les positions avec les nouveaux index et infos
+    const positionsToInsert = newOrder
+      .filter(pos => pos.chasseur_id && pos.chasseur_id !== 0)
+      .map(pos => ({
+        id: pos.id,
+        chasseur_id: pos.chasseur_id,
+        element: pos.element,
+        role: pos.role,
+        position: pos.position
+      }));
+    if (positionsToInsert.length > 0) {
+      const { error: insertError } = await supabase
+        .from('tier_list_teams_chasseurs')
+        .insert(positionsToInsert);
+      if (insertError) {
+        console.error('Erreur lors de la réinsertion des positions:', insertError);
+        throw new Error(`Erreur lors de la réinsertion des positions: ${insertError.message}`);
       }
     }
   }

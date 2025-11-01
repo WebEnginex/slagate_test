@@ -153,17 +153,18 @@ const STATS_PAR_ARTEFACT: Record<string, string[]> = {
     "Défense (%)"
   ],
   "gants": [
-    "Attaque supplémentaire"
+    "Attaque supplémentaire",
+    "Attaque (%)"
   ],
   "bottes": [
     "PV (%)",
     "Défense (%)",
-    "Dégâts élémentaires (%)",
     "Dégâts de coup critique",
     "Pénétration de défense"
   ],
   "collier": [
-    "PV supplémentaire"
+    "PV supplémentaire",
+    "PV (%)"
   ],
   "bracelet": [
     "Dégâts de Feu (%)",

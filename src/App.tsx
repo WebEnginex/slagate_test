@@ -28,6 +28,7 @@ const ChasseursAdmin = lazy(() => import("@/admin/AdminChasseursPage"));
 const ArtefactsAdmin = lazy(() => import("@/admin/AdminArtefactsPage"));
 const NoyauxAdmin = lazy(() => import("@/admin/AdminNoyauxPage"));
 const ArmesAdmin = lazy(() => import("@/admin/AdminArmesPage"));
+const ProfilAdmin = lazy(() => import("@/admin/AdminProfilPage"));
 
 // Import des composants d'authentification admin
 import { AdminProtection } from "@/admin/auth/components/AdminProtection";
@@ -148,6 +149,14 @@ const App = () => (
             <AdminProtection>
               <Suspense fallback={<LoadingFallback />}>
                 <ArmesAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          <Route path="/admin/profil" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <ProfilAdmin />
               </Suspense>
             </AdminProtection>
           } />

@@ -1,12 +1,29 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Settings, Gift, Trophy, Users, Package, Zap, Database, Sparkles } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Settings, Gift, Trophy, Users, Package, Zap, Database, Sparkles, User, LogOut } from "lucide-react";
 import { useAuth } from "@/admin/auth/hooks/useAuth";
 
 const DashboardPage: React.FC = () => {
-  const { user, isAuthenticated, signIn } = useAuth();
+  const { user, isAuthenticated, signIn, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+    }
+  };
 
   // Catégories de panneaux d'administration
   const adminCategories = [
@@ -133,17 +150,39 @@ const DashboardPage: React.FC = () => {
               </p>
             </div>
             
-            {/* Badge utilisateur - Simplifié sans email */}
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">
-                  {user?.email?.charAt(0).toUpperCase() || 'A'}
-                </span>
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-medium text-white">Administrateur</p>
-              </div>
-            </div>
+            {/* Badge utilisateur - Menu dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-3 bg-white/10 backdrop-blur-sm px-4 py-3 rounded-xl border border-white/20 hover:bg-white/15 transition-all cursor-pointer">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 flex items-center justify-center">
+                    <span className="text-white font-bold text-lg">
+                      {user?.email?.charAt(0).toUpperCase() || 'A'}
+                    </span>
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-medium text-white">
+                      {user?.user_metadata?.display_name || 'Administrateur'}
+                    </p>
+                  </div>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-sidebar border-sidebar-border">
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/admin/profil" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>Mon Profil</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-sidebar-border" />
+                <DropdownMenuItem 
+                  onClick={handleSignOut}
+                  className="cursor-pointer text-red-400 focus:text-red-400 focus:bg-red-400/10"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Déconnexion</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

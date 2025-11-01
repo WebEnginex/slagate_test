@@ -2,7 +2,14 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, LogOut, Menu } from "lucide-react";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Settings, LogOut, Menu, User } from "lucide-react";
 import { useAuth } from "@/admin/auth/hooks/useAuth";
 import SideNav from "@/components/SideNav";
 
@@ -87,17 +94,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       })}
                     </nav>
                   </div>
-
-                  {/* Côté droit : Bouton de déconnexion */}
-                  <Button 
-                    onClick={handleSignOut}
-                    variant="outline" 
-                    size="sm" 
-                    className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Déconnexion
-                  </Button>
                 </div>
               </CardContent>
             </Card>

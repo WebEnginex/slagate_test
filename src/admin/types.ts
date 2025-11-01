@@ -106,3 +106,186 @@ export type StatOption = typeof STATS_OPTIONS[number];
 
 // Export du type existant pour réutilisation
 export type { ChasseurBuild } from '../config/builds/buildsChasseurs';
+
+// ========================================
+// Types pour la gestion des chasseurs
+// ========================================
+
+// Eléments possibles pour un chasseur
+export const ELEMENT_CHASSEUR_VALUES = [
+  'Feu',
+  'Vent',
+  'Lumière',
+  'Eau',
+  'Ténèbres'
+] as const;
+
+export type ElementChasseur = typeof ELEMENT_CHASSEUR_VALUES[number];
+
+// Raretés possibles pour un chasseur
+export const RARETE_VALUES = ['SR', 'SSR'] as const;
+
+export type Rarete = typeof RARETE_VALUES[number];
+
+// Interface complète d'un chasseur
+export interface Chasseur {
+  id: number;
+  nom: string;
+  image: string | null;
+  image_body: string | null;
+  element: string | null;
+  element_chasseur: ElementChasseur | null;
+  rarete: Rarete | null;
+  last_modified: string | null;
+}
+
+// Données pour créer un chasseur
+export interface CreateChasseurData {
+  nom: string;
+  element_chasseur: ElementChasseur;
+  rarete: Rarete;
+  image_body?: string | null;
+  element?: string | null;
+}
+
+// Données pour mettre à jour un chasseur (tous les champs optionnels)
+export interface UpdateChasseurData {
+  nom?: string;
+  element_chasseur?: ElementChasseur;
+  rarete?: Rarete;
+  image_body?: string | null;
+  element?: string | null;
+}
+
+// ========================================
+// Types pour la gestion des artefacts
+// ========================================
+
+// Catégories possibles pour un artefact
+export const CATEGORIE_ARTEFACT_VALUES = [
+  'Casque',
+  'Armure',
+  'Gants',
+  'Bottes',
+  'Collier',
+  'Bracelet',
+  'Bague',
+  'Boucles',
+] as const;
+
+// IDs des artefacts de référence pour l'affichage des icônes de catégories
+export const CATEGORIE_ARTEFACT_ICONS: Record<string, number> = {
+  'Casque': 113,
+  'Armure': 114,
+  'Gants': 115,
+  'Bottes': 116,
+  'Collier': 117,
+  'Bracelet': 118,
+  'Bague': 119,
+  'Boucles': 120,
+};
+
+export type CategorieArtefact = typeof CATEGORIE_ARTEFACT_VALUES[number];
+
+// Interface complète d'un artefact
+export interface Artefact {
+  id: number;
+  nom: string;
+  image: string | null;
+  categorie: CategorieArtefact | null;
+  created_at: string | null;
+  last_modified: string | null;
+}
+
+// Données pour créer un artefact
+export interface CreateArtefactData {
+  nom: string;
+  categorie: CategorieArtefact;
+}
+
+// Données pour mettre à jour un artefact (tous les champs optionnels)
+export interface UpdateArtefactData {
+  nom?: string;
+  categorie?: CategorieArtefact;
+}
+
+// ========================================
+// Types pour la gestion des noyaux
+// ========================================
+
+// Slots possibles pour un noyau (1, 2, ou 3)
+export const SLOT_NOYAU_VALUES = [1, 2, 3] as const;
+
+export type SlotNoyau = typeof SLOT_NOYAU_VALUES[number];
+
+// Interface complète d'un noyau
+export interface Noyau {
+  id: number;
+  nom: string;
+  image: string | null;
+  description: string | null;
+  slot: SlotNoyau | null;
+  created_at: string | null;
+  last_modified: string | null;
+}
+
+// Données pour créer un noyau
+export interface CreateNoyauData {
+  nom: string;
+  slot: SlotNoyau;
+  description?: string | null;
+}
+
+// Données pour mettre à jour un noyau (tous les champs optionnels)
+export interface UpdateNoyauData {
+  nom?: string;
+  slot?: SlotNoyau;
+  description?: string | null;
+}
+
+// ========================================
+// Types pour la gestion des armes de Jinwoo
+// ========================================
+
+// Eléments possibles pour une arme (mêmes que les chasseurs)
+export const ELEMENT_ARME_VALUES = [
+  'Feu',
+  'Eau',
+  'Vent',
+  'Lumière',
+  'Ténèbres'
+] as const;
+
+export type ElementArme = typeof ELEMENT_ARME_VALUES[number];
+
+// Mapping des éléments vers leurs URLs d'icônes
+export const ELEMENT_ARME_ICONS: Record<ElementArme, string> = {
+  'Feu': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Feu_element.webp',
+  'Eau': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Eau_element.webp',
+  'Vent': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Vent_element.webp',
+  'Lumière': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Lumiere_element.webp',
+  'Ténèbres': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Tenebre_element.webp',
+};
+
+// Interface complète d'une arme de Jinwoo
+export interface JinwooArme {
+  id: number;
+  nom: string;
+  image: string | null;
+  element: ElementArme | null;
+  arme_element: string | null; // URL de l'icône d'élément
+  created_at: string | null;
+  last_modified: string | null;
+}
+
+// Données pour créer une arme
+export interface CreateArmeData {
+  nom: string;
+  element?: ElementArme | null;
+}
+
+// Données pour mettre à jour une arme (tous les champs optionnels)
+export interface UpdateArmeData {
+  nom?: string;
+  element?: ElementArme | null;
+}

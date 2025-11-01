@@ -24,6 +24,10 @@ const BuildsAdmin = lazy(() => import("@/admin/AdminBuildsPage"));
 const AdminDashboard = lazy(() => import("@/admin/AdminDashboard"));
 const PromoCodesAdmin = lazy(() => import("@/admin/pages/promo-codes/PromoCodesAdminPage"));
 const TierListAdmin = lazy(() => import("@/admin/pages/tier-list/TierListAdminPage"));
+const ChasseursAdmin = lazy(() => import("@/admin/AdminChasseursPage"));
+const ArtefactsAdmin = lazy(() => import("@/admin/AdminArtefactsPage"));
+const NoyauxAdmin = lazy(() => import("@/admin/AdminNoyauxPage"));
+const ArmesAdmin = lazy(() => import("@/admin/AdminArmesPage"));
 
 // Import des composants d'authentification admin
 import { AdminProtection } from "@/admin/auth/components/AdminProtection";
@@ -112,6 +116,38 @@ const App = () => (
             <AdminProtection>
               <Suspense fallback={<LoadingFallback />}>
                 <TierListAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          <Route path="/admin/chasseurs" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <ChasseursAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          <Route path="/admin/artefacts" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <ArtefactsAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          <Route path="/admin/noyaux" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <NoyauxAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          <Route path="/admin/armes" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <ArmesAdmin />
               </Suspense>
             </AdminProtection>
           } />

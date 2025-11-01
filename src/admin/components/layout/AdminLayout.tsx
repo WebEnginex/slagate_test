@@ -17,10 +17,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const adminNavItems = [
-  { to: "/admin", label: "Dashboard", exact: true },
-  { to: "/admin/builds", label: "Builds" },
-  { to: "/admin/promo-codes", label: "Codes Promo" },
-  { to: "/admin/tier-list", label: "Tier List" },
+    { to: "/admin", label: "Dashboard", exact: true, color: "bg-solo-purple hover:bg-solo-purple/90" },
+    { to: "/admin/builds", label: "Builds", color: "bg-violet-600 hover:bg-violet-700" },
+    { to: "/admin/chasseurs", label: "Chasseurs", color: "bg-blue-600 hover:bg-blue-700" },
+    { to: "/admin/artefacts", label: "Artefacts", color: "bg-green-600 hover:bg-green-700" },
+    { to: "/admin/noyaux", label: "Noyaux", color: "bg-amber-600 hover:bg-amber-700" },
+    { to: "/admin/armes", label: "Armes", color: "bg-red-600 hover:bg-red-700" },
+    { to: "/admin/promo-codes", label: "Codes Promo", color: "bg-pink-600 hover:bg-pink-700" },
+    { to: "/admin/tier-list", label: "Tier List", color: "bg-purple-600 hover:bg-purple-700" },
   ];
 
   const handleSignOut = async () => {
@@ -73,6 +77,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             asChild
                             variant={isActive ? "default" : "ghost"}
                             size="sm"
+                            className={isActive ? `${item.color} text-white` : ""}
                           >
                             <Link to={item.to}>
                               {item.label}

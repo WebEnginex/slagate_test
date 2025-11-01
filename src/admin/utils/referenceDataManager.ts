@@ -11,7 +11,9 @@ export class ReferenceDataManager {
    */
   static async loadAllReferenceData(): Promise<EditorReferenceData> {
     try {
-      console.log('🔍 Chargement des données de référence...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Chargement des données de référence...');
+      }
       
       // Charger toutes les données en parallèle
       const [
@@ -53,13 +55,15 @@ export class ReferenceDataManager {
           .map(s => ({ ...s, id: s.id! }))
       };
 
-      console.log('✅ Données de référence chargées:', {
-        chasseurs: referenceData.chasseurs.length,
-        artefacts: referenceData.artefacts.length,
-        noyaux: referenceData.noyaux.length,
-        ombres: referenceData.ombres.length,
-        setsBonus: referenceData.setsBonus.length
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Données de référence chargées:', {
+          chasseurs: referenceData.chasseurs.length,
+          artefacts: referenceData.artefacts.length,
+          noyaux: referenceData.noyaux.length,
+          ombres: referenceData.ombres.length,
+          setsBonus: referenceData.setsBonus.length
+        });
+      }
 
       return referenceData;
     } catch (error) {

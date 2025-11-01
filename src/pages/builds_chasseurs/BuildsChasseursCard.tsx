@@ -358,12 +358,21 @@ export default function BuildChasseurCard({
 
             {/* Grille des artefacts */}
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
-              {Object.entries(build.artefacts).map(([slot, conf]) => {
+              {/* Ordre fixe : casque, armure, gants, bottes, collier, bracelet, bague, boucles */}
+              {['casque', 'armure', 'gants', 'bottes', 'collier', 'bracelet', 'bague', 'boucles'].map((slot) => {
+                const conf = build.artefacts[slot];
+                if (!conf) return null;
+                
                 const artefact = getById(artefacts, conf.id);
                 
                 // Si l'artefact n'est pas trouvé et qu'il n'y a aucun artefact chargé, 
                 // c'est probablement que les données sont en cours de chargement
                 const isLoading = !artefact && (artefacts.length === 0 || isDataLoading);
+                
+                // Affichage du nom du slot avec "Boucles d'oreilles" pour "boucles"
+                const displaySlotName = slot === 'boucles' 
+                  ? "Boucles d'oreilles" 
+                  : slot.charAt(0).toUpperCase() + slot.slice(1);
                 
                 return (
                   <div
@@ -372,7 +381,7 @@ export default function BuildChasseurCard({
                   >
                     <div className="flex flex-col items-center">
                       <p className="mb-1 text-[10px] sm:text-2xs font-semibold text-solo-light-purple">
-                        {slot.charAt(0).toUpperCase() + slot.slice(1)}
+                        {displaySlotName}
                       </p>
                       
                       {isLoading ? (

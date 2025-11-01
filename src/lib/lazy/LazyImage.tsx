@@ -53,17 +53,10 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   const [imageSrc, setImageSrc] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [hasError, setHasError] = React.useState(false);
-  const [lastSrc, setLastSrc] = React.useState<string | null>(null);
 
   // 🚀 Effet pour charger l'image quand elle devient visible
   React.useEffect(() => {
-    if (!lazyLoad || !inView || hasError) return;
-    // Si le src a changé, réinitialiser l'état et recharger
-    if (lastSrc !== src) {
-      setImageSrc(null);
-      setLastSrc(src);
-    }
-    if (imageSrc) return; // Si déjà chargée, ne pas recharger
+    if (!lazyLoad || !inView || imageSrc || hasError) return;
 
     const loadImage = async () => {
       setIsLoading(true);
@@ -87,7 +80,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
     };
 
     loadImage();
-  }, [lazyLoad, inView, src, imageSrc, hasError, lastSrc]);
+  }, [lazyLoad, inView, src, imageSrc, hasError]);
 
   // 🧹 Cleanup des URL blob lors du démontage
   React.useEffect(() => {

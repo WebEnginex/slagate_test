@@ -91,13 +91,12 @@ const Index = () => {
   }
 
   // Si pas de données ET en chargement, afficher message
-  if (!hunters || hunters.length === 0) {
-    if (loading) {
-      return <div>Chargement des chasseurs...</div>;
-    }
-    if (error) {
-      return <div>Erreur lors du chargement des chasseurs.</div>;
-    }
+  if ((!hunters || hunters.length === 0) && loading) {
+    return <div>Chargement des chasseurs...</div>;
+  }
+
+  if (error && (!hunters || hunters.length === 0)) {
+    return <div>Erreur lors du chargement des chasseurs.</div>;
   }
 
   // Ordre d'affichage strict : 1 à gauche, 2 au centre, 3 à droite (desktop)

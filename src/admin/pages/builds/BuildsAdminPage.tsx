@@ -11,8 +11,6 @@ import { Save, Download, Upload, AlertTriangle, CheckCircle, RefreshCw } from 'l
 // Layout géré par AdminLayout, pas besoin d'import
 import { BuildsSupabaseService } from './services/buildsSupabaseService';
 import { ReferenceDataManager } from '../../utils/referenceDataManager';
-import { BuildEditor } from './components/BuildEditor';
-import { ChasseurSelector } from './components/ChasseurSelector';
 import ModernBuildEditor from './components/ModernBuildEditor';
 import type { ChasseurBuild, EditorReferenceData, BuildValidationResult } from '../../types';
 
@@ -130,8 +128,7 @@ export default function BuildsAdminPage() {
     // Filtrage spécial pour Sung Jinwoo
     if (elementFilter === "jinwoo") {
       filtered = chasseurs.filter(c => 
-        c.chasseur_nom.toLowerCase().includes("jinwoo") || 
-        c.chasseur_nom.toLowerCase().includes("sung")
+        c.chasseur_nom.toLowerCase() === "sung jinwoo"
       );
     } else if (elementFilter !== "tous") {
       filtered = chasseurs.filter(c => c.element.toLowerCase() === elementFilter);
@@ -143,15 +140,22 @@ export default function BuildsAdminPage() {
   const loadReferenceData = React.useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔄 Chargement des données de référence depuis Supabase...');
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Chargement des données de référence depuis Supabase...');
+      }
+      
       const data = await ReferenceDataManager.loadAllReferenceData();
       setReferenceData(data);
-      console.log('✅ Données de référence chargées:', {
-        chasseurs: data.chasseurs.length,
-        artefacts: data.artefacts.length,
-        noyaux: data.noyaux.length,
-        setsBonus: data.setsBonus.length
-      });
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Données de référence chargées:', {
+          chasseurs: data.chasseurs.length,
+          artefacts: data.artefacts.length,
+          noyaux: data.noyaux.length,
+          setsBonus: data.setsBonus.length
+        });
+      }
     } catch (error) {
       console.error('❌ Erreur lors du chargement des données:', error);
       showMessage('error', `Erreur lors du chargement des données de référence: ${error.message}`);
@@ -163,9 +167,17 @@ export default function BuildsAdminPage() {
   const loadChasseurs = React.useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔄 Chargement des chasseurs depuis Supabase...');
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Chargement des chasseurs depuis Supabase...');
+      }
+      
       const data = await buildsService.getAllChasseurs();
-      console.log('✅ Chasseurs chargés:', data);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Chasseurs chargés:', data);
+      }
+      
       setChasseurs(data);
       if (data.length === 0) {
         showMessage('warning', 'Aucun chasseur trouvé dans la base de données');

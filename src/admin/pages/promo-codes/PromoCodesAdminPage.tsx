@@ -35,6 +35,7 @@ import { Plus, Edit, Trash2, Gift, Calendar, Users } from 'lucide-react';
 import { formatPromoCodeDate, createExpirationDate, isPromoCodeExpired, isPromoCodePermanent, formatDateForInput } from '@/admin/utils/date-utils';
 import { PromoCodesService } from '@/admin/services/promo-codes-service';
 import type { PromoCodeWithRewards, CreatePromoCodeData, UpdatePromoCodeData } from '@/admin/types/promo-codes';
+import { toast } from '@/hooks/use-toast';
 
 const PromoCodesAdminPage: React.FC = () => {
   const [promoCodes, setPromoCodes] = useState<PromoCodeWithRewards[]>([]);
@@ -70,13 +71,21 @@ const PromoCodesAdminPage: React.FC = () => {
     try {
       // Validation
       if (!formData.code.trim() || formData.rewards.length === 0) {
-        alert('Veuillez remplir tous les champs obligatoires');
+        toast({ 
+          title: "Erreur", 
+          description: "Veuillez remplir tous les champs obligatoires", 
+          variant: "destructive" 
+        });
         return;
       }
 
       // Validation de la date d'expiration
       if (!formData.isPermanent && !formData.expirationDate.trim()) {
-        alert('Veuillez définir une date d\'expiration ou cocher "Permanent"');
+        toast({ 
+          title: "Erreur", 
+          description: "Veuillez définir une date d'expiration ou cocher \"Permanent\"", 
+          variant: "destructive" 
+        });
         return;
       }
 
@@ -95,7 +104,11 @@ const PromoCodesAdminPage: React.FC = () => {
       await loadPromoCodes();
     } catch (error) {
       console.error('Erreur lors de la création du code promo:', error);
-      alert('Erreur lors de la création du code promo');
+      toast({ 
+        title: "Erreur", 
+        description: "Erreur lors de la création du code promo", 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -106,7 +119,11 @@ const PromoCodesAdminPage: React.FC = () => {
       await loadPromoCodes();
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
-      alert('Erreur lors de la suppression du code promo');
+      toast({ 
+        title: "Erreur", 
+        description: "Erreur lors de la suppression du code promo", 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -133,13 +150,21 @@ const PromoCodesAdminPage: React.FC = () => {
     try {
       // Validation
       if (!formData.code.trim() || formData.rewards.length === 0) {
-        alert('Veuillez remplir tous les champs obligatoires');
+        toast({ 
+          title: "Erreur", 
+          description: "Veuillez remplir tous les champs obligatoires", 
+          variant: "destructive" 
+        });
         return;
       }
 
       // Validation de la date d'expiration
       if (!formData.isPermanent && !formData.expirationDate.trim()) {
-        alert('Veuillez définir une date d\'expiration ou cocher "Permanent"');
+        toast({ 
+          title: "Erreur", 
+          description: "Veuillez définir une date d'expiration ou cocher \"Permanent\"", 
+          variant: "destructive" 
+        });
         return;
       }
 
@@ -158,7 +183,11 @@ const PromoCodesAdminPage: React.FC = () => {
       await loadPromoCodes();
     } catch (error) {
       console.error('Erreur lors de la modification du code promo:', error);
-      alert('Erreur lors de la modification du code promo');
+      toast({ 
+        title: "Erreur", 
+        description: "Erreur lors de la modification du code promo", 
+        variant: "destructive" 
+      });
     }
   };
 

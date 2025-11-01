@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '../../../../components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '../../../../components/ui/card';
-import { Input } from '../../../../components/ui/input';
-import { Label } from '../../../../components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
-
-import { Alert, AlertDescription } from '../../../../components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Save, Plus, Trash2, Eye, AlertTriangle } from 'lucide-react';
 
 // Composant pour afficher un item avec image et nom
@@ -115,6 +114,22 @@ const STATS_PRINCIPALES = [
   "Baisse du coût de PM"
 ];
 
+// Stats principales par emplacement de noyau
+const NOYAUX_STATS_PAR_SLOT: Record<number, string[]> = {
+  1: [
+    'Attaque (%)',
+    'Attaque supplémentaire'
+  ],
+  2: [
+    'Défense (%)',
+    'Défense supplémentaire'
+  ],
+  3: [
+    'PV (%)',
+    'PV supplémentaire'
+  ]
+};
+
 // Éléments disponibles
 const ELEMENTS = ["Feu (%)", "Eau (%)", "Glace (%)", "Électricité (%)", "Vent (%)", "Terre (%)", "Lumière (%)", "Ombre (%)"];
 
@@ -122,6 +137,53 @@ const SLOTS_ARTEFACTS = [
   "casque", "armure", "gants", "bottes", 
   "collier", "bracelet", "bague", "boucles"
 ];
+
+// Stats principales par catégorie d'artefact
+const STATS_PAR_ARTEFACT: Record<string, string[]> = {
+  "casque": [
+    "Attaque supplémentaire",
+    "Défense supplémentaire",
+    "PV supplémentaire",
+    "Attaque (%)",
+    "Défense (%)",
+    "PV (%)"
+  ],
+  "armure": [
+    "Défense supplémentaire",
+    "Défense (%)"
+  ],
+  "gants": [
+    "Attaque supplémentaire"
+  ],
+  "bottes": [
+    "PV (%)",
+    "Défense (%)",
+    "Dégâts élémentaires (%)",
+    "Dégâts de coup critique",
+    "Pénétration de défense"
+  ],
+  "collier": [
+    "PV supplémentaire"
+  ],
+  "bracelet": [
+    "Dégâts de Feu (%)",
+    "Dégâts d'Eau (%)",
+    "Dégâts de Vent (%)",
+    "Dégâts de Lumière (%)",
+    "Dégâts de Ténèbres (%)"
+  ],
+  "bague": [
+    "Attaque supplémentaire",
+    "Attaque (%)",
+    "PV supplémentaire",
+    "PV (%)",
+    "Défense supplémentaire",
+    "Défense (%)"
+  ],
+  "boucles": [
+    "PM supplémentaire"
+  ]
+};
 
 export default function BuildEditor({ chasseurData, referenceData, onSave, onDelete }: BuildEditorProps) {
   const [editingBuild, setEditingBuild] = useState<string | null>(null);
@@ -133,18 +195,20 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
 
   // Debug des données de référence
   useEffect(() => {
-    console.log('📊 Reference data loaded:', {
-      artefacts: referenceData?.artefacts?.length || 0,
-      noyaux: referenceData?.noyaux?.length || 0,
-      categories: referenceData?.artefacts?.map(a => a.categorie).filter(Boolean) || []
-    });
-    
-    // Debug détaillé des artefacts
-    if (referenceData?.artefacts && referenceData.artefacts.length > 0) {
-      console.log('🔍 Premiers artefacts:', referenceData.artefacts.slice(0, 5));
-      console.log('🏷️ Toutes les catégories trouvées:', 
-        [...new Set(referenceData.artefacts.map(a => a.categorie))].filter(Boolean)
-      );
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📊 Reference data loaded:', {
+        artefacts: referenceData?.artefacts?.length || 0,
+        noyaux: referenceData?.noyaux?.length || 0,
+        categories: referenceData?.artefacts?.map(a => a.categorie).filter(Boolean) || []
+      });
+      
+      // Debug détaillé des artefacts
+      if (referenceData?.artefacts && referenceData.artefacts.length > 0) {
+        console.log('🔍 Premiers artefacts:', referenceData.artefacts.slice(0, 5));
+        console.log('🏷️ Toutes les catégories trouvées:', 
+          [...new Set(referenceData.artefacts.map(a => a.categorie))].filter(Boolean)
+        );
+      }
     }
   }, [referenceData]);
 
@@ -179,7 +243,11 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
     
     const dbCategorie = categorieMapping[categorie] || categorie;
     const filtered = referenceData?.artefacts.filter(a => a.categorie === dbCategorie) || [];
-    console.log(`🔍 Artefacts pour catégorie "${categorie}" (DB: "${dbCategorie}"):`, filtered.length, filtered);
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 Artefacts pour catégorie "${categorie}" (DB: "${dbCategorie}"):`, filtered.length, filtered);
+    }
+    
     return filtered;
   };
 
@@ -191,12 +259,12 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
         "PV supplémentaire": "",
         "Défense supplémentaire": "", 
         "PM": "",
-        "Attaque supplémentaire": "Le plus possible",
+        "Attaque supplémentaire": "",
         "Précision": "",
-        "Taux de coup critique": "10000",
-        "Dégâts de coup critique": "200%",
-        "Hausse des dégâts": "30% +",
-        "Pénétration de défense": "30% +",
+        "Taux de coup critique": "",
+        "Dégâts de coup critique": "",
+        "Hausse des dégâts": "",
+        "Pénétration de défense": "",
         "Réduction des dégâts": "",
         "Hausse des soins donnés": "", 
         "Hausse des soins reçus": "",
@@ -401,7 +469,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                           ...formData,
                           stats: {...formData.stats, [stat]: e.target.value}
                         })}
-                        placeholder="Valeur (ex: 30%, 10000, Le plus possible)"
+                        placeholder="Valeur"
                       />
                     </div>
                   ))}
@@ -478,7 +546,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                               <SelectValue placeholder="Choisir une stat" />
                             </SelectTrigger>
                             <SelectContent>
-                              {[...STATS_PRINCIPALES, ...ELEMENTS].map(stat => (
+                              {(STATS_PAR_ARTEFACT[slot] || []).map(stat => (
                                 <SelectItem key={stat} value={stat}>{stat}</SelectItem>
                               ))}
                             </SelectContent>
@@ -551,7 +619,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                                   <SelectValue placeholder="Stat Principale" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {STATS_PRINCIPALES.map(stat => (
+                                  {(NOYAUX_STATS_PAR_SLOT[slotNumber] || []).map(stat => (
                                     <SelectItem key={stat} value={stat}>{stat}</SelectItem>
                                   ))}
                                 </SelectContent>

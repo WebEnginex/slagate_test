@@ -15,7 +15,7 @@ const ItemWithImage = ({ image, nom, id }: { image?: string; nom: string; id: nu
       <img 
         src={image} 
         alt={nom}
-        className="w-8 h-8 rounded object-cover bg-muted"
+        className="w-8 h-8 object-contain bg-transparent"
         onError={(e) => {
           e.currentTarget.style.display = 'none';
         }}
@@ -89,7 +89,7 @@ interface BuildEditorProps {
   referenceData?: {
     chasseurs: Array<{ id: number; nom: string; element: string; image?: string }>;
     artefacts: Array<{ id: number; nom: string; categorie: string; image?: string }>;
-    noyaux: Array<{ id: number; nom: string; image?: string }>;
+    noyaux: Array<{ id: number; nom: string; image?: string; slot?: number | null }>;
     setsBonus: Array<{ id: number; nom: string }>;
   };
   onSave: (buildName: string, buildData: BuildFormData, originalBuildName?: string) => Promise<void>;
@@ -592,15 +592,17 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                                   placeholder="Choisir un noyau"
                                 />
                                 <SelectContent>
-                                  {referenceData?.noyaux.map(noyauRef => (
-                                    <SelectItem key={noyauRef.id} value={noyauRef.id.toString()}>
-                                      <ItemWithImage
-                                        image={noyauRef.image}
-                                        nom={noyauRef.nom}
-                                        id={noyauRef.id}
-                                      />
-                                    </SelectItem>
-                                  ))}
+                                  {referenceData?.noyaux
+                                    .filter(noyauRef => noyauRef.slot === slotNumber)
+                                    .map(noyauRef => (
+                                      <SelectItem key={noyauRef.id} value={noyauRef.id.toString()}>
+                                        <ItemWithImage
+                                          image={noyauRef.image}
+                                          nom={noyauRef.nom}
+                                          id={noyauRef.id}
+                                        />
+                                      </SelectItem>
+                                    ))}
                                 </SelectContent>
                               </Select>
                             </div>

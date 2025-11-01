@@ -25,7 +25,7 @@ export class ReferenceDataManager {
       ] = await Promise.all([
         supabase.from('chasseurs').select('id, nom, element, image, rarete').not('id', 'is', null).order('nom'),
         supabase.from('artefacts').select('id, nom, categorie, image').not('id', 'is', null).order('nom'),
-        supabase.from('noyaux').select('id, nom, image').not('id', 'is', null).order('nom'),
+        supabase.from('noyaux').select('id, nom, image, slot').not('id', 'is', null).order('nom'),
         supabase.from('ombres').select('id, nom').not('id', 'is', null).order('nom'),
         supabase.from('sets_bonus').select('id, nom').not('id', 'is', null).order('nom')
       ]);

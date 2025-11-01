@@ -8,7 +8,7 @@ export type BuildEditorData = ChasseurBuild;
 export interface EditorReferenceData {
   chasseurs: Array<{ id: number; nom: string; element: string; image: string | null; rarete: string }>;
   artefacts: Array<{ id: number; nom: string; categorie: string | null; image: string | null }>;
-  noyaux: Array<{ id: number; nom: string; image: string | null }>;
+  noyaux: Array<{ id: number; nom: string; image: string | null; slot: number | null }>;
   ombres: Array<{ id: number; nom: string }>;
   setsBonus: Array<{ id: number; nom: string }>;
 }

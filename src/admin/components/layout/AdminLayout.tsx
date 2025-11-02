@@ -84,7 +84,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             asChild
                             variant={isActive ? "default" : "ghost"}
                             size="sm"
-                            className={isActive ? `${item.activeColor} text-white` : `${item.hoverColor} text-white/80`}
+                            className={`${isActive ? `${item.activeColor} ${item.hoverColor} text-white` : `${item.hoverColor} text-white/80`}`}
                           >
                             <Link to={item.to} className="flex items-center">
                               {item.icon}

@@ -33,6 +33,14 @@ const TierListAdminPage: React.FC = () => {
 
   return (
     <AdminLayout>
+      <style>{`
+        .tier-list-tabs button[data-state="active"]:hover {
+          background-color: rgb(217 119 6) !important;
+        }
+        .tier-list-tabs button[data-state="active"] {
+          background-color: rgb(217 119 6) !important;
+        }
+      `}</style>
       <div className="space-y-4">
         {/* Header - Style des autres pages admin */}
         <div className="flex justify-between items-center">
@@ -54,12 +62,12 @@ const TierListAdminPage: React.FC = () => {
           </CardHeader>
           <CardContent className="p-3 sm:p-4 md:p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3 bg-sidebar-accent">
+              <TabsList className="tier-list-tabs grid w-full grid-cols-3 bg-sidebar-accent [&>button[data-state=active]:hover]:bg-amber-600">
                 {tierListTabs.map((tab) => (
                   <TabsTrigger 
                     key={tab.id} 
                     value={tab.id}
-                    className="flex items-center gap-2 text-sidebar-foreground/80 data-[state=active]:text-white data-[state=active]:bg-solo-purple"
+                    className="flex items-center gap-2 text-sidebar-foreground/80 hover:text-white hover:bg-sidebar-accent data-[state=active]:text-white data-[state=active]:bg-amber-600"
                   >
                     {tab.icon}
                     {tab.label}

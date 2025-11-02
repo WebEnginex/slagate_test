@@ -239,11 +239,11 @@ const PromoCodesAdminPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white">Codes Promo</h1>
+          <h1 className="text-2xl font-bold text-white">Codes Promo</h1>
           <p className="text-gray-400 mt-1">
             Gérez les codes promotionnels et leurs récompenses
           </p>
@@ -251,9 +251,9 @@ const PromoCodesAdminPage: React.FC = () => {
         
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={resetForm} className="bg-violet-600 hover:bg-violet-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Nouveau Code
+            <Button onClick={resetForm} size="sm" className="bg-rose-600 hover:bg-rose-700">
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Nouveau Code</span>
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -393,63 +393,6 @@ const PromoCodesAdminPage: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-violet-500/10 border-violet-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Gift className="w-8 h-8 text-violet-400" />
-              <div>
-                <p className="text-sm text-gray-400">Total codes</p>
-                <p className="text-2xl font-bold text-white">{promoCodes.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-green-500/10 border-green-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-8 h-8 text-green-400" />
-              <div>
-                <p className="text-sm text-gray-400">Codes actifs</p>
-                <p className="text-2xl font-bold text-white">
-                  {promoCodes.filter(code => !isExpired(code.expires_at)).length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-blue-500/10 border-blue-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-blue-400" />
-              <div>
-                <p className="text-sm text-gray-400">Permanents</p>
-                <p className="text-2xl font-bold text-white">
-                  {promoCodes.filter(code => isPermanent(code.expires_at)).length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="bg-gray-500/10 border-gray-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-400">Expirés</p>
-                <p className="text-2xl font-bold text-white">
-                  {promoCodes.filter(code => isExpired(code.expires_at)).length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Liste des codes */}

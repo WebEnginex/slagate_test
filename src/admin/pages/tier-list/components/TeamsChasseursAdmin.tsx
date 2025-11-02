@@ -270,11 +270,11 @@ const TeamsChasseursAdmin: React.FC = () => {
           <Button
             onClick={() => handleAddPosition(role)}
             size="sm"
-            variant="outline"
-            className="text-white border-sidebar-border"
+            className="bg-amber-600 hover:bg-amber-700"
             disabled={saving}
           >
-            <Plus className="h-4 w-4 mr-1" /> Ajouter
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Ajouter</span>
           </Button>
         </CardHeader>
         <CardContent>

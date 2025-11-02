@@ -33,11 +33,11 @@ const TierListAdminPage: React.FC = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Header - Style des autres pages admin */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white">Tier Lists</h1>
+            <h1 className="text-2xl font-bold text-white">Tier Lists</h1>
             <p className="text-sidebar-foreground/70 mt-1">
               Organisez les armes, artefacts et équipements par niveau de puissance
             </p>

@@ -175,32 +175,25 @@ export const AdminNoyauxPage: React.FC = () => {
     setFilterSlot('tous');
   };
 
-  // Compter les noyaux par slot
-  const countBySlot = (slot: number) => noyaux.filter(n => n.slot === slot).length;
-
   return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Zap className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Gestion des Noyaux</h1>
-            <p className="text-muted-foreground">
-              {noyaux.length} noyau{noyaux.length > 1 ? 'x' : ''} au total
-              {filteredNoyaux.length !== noyaux.length &&
-                ` • ${filteredNoyaux.length} affiché${filteredNoyaux.length > 1 ? 's' : ''}`}
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* En-tête compact */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Gestion des Noyaux</h1>
+          <p className="text-sm text-muted-foreground">
+            {filteredNoyaux.length !== noyaux.length &&
+              `${filteredNoyaux.length} / `}{noyaux.length} noyau{noyaux.length > 1 ? 'x' : ''}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadNoyaux} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Actualiser
+          <Button variant="outline" size="sm" onClick={loadNoyaux} disabled={isLoading}>
+            <RefreshCw className={`w-4 h-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Actualiser</span>
           </Button>
-          <Button onClick={handleCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau noyau
+          <Button size="sm" onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nouveau noyau</span>
           </Button>
         </div>
       </div>
@@ -213,111 +206,89 @@ export const AdminNoyauxPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Statistiques par slot */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full bg-blue-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Slot 1</p>
-                <p className="text-2xl font-bold">{countBySlot(1)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full bg-purple-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Slot 2</p>
-                <p className="text-2xl font-bold">{countBySlot(2)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-                <div className="w-5 h-5 rounded-full bg-amber-500" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Slot 3</p>
-                <p className="text-2xl font-bold">{countBySlot(3)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtres */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Recherche */}
-            <div className="space-y-2">
-              <Label htmlFor="search">Rechercher</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Nom ou description..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
+      {/* Filtres horizontaux */}
+      <Card className="bg-sidebar border-sidebar-border">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Slots */}
+            <div className="flex-1">
+              <Label className="text-xs font-medium mb-2 block text-muted-foreground">
+                Slot
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setFilterSlot('tous')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterSlot === 'tous'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <span>Tous</span>
+                </button>
+                <button
+                  onClick={() => setFilterSlot('1')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterSlot === '1'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span className="hidden sm:inline">Slot 1</span>
+                </button>
+                <button
+                  onClick={() => setFilterSlot('2')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterSlot === '2'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <div className="w-3 h-3 rounded-full bg-purple-500" />
+                  <span className="hidden sm:inline">Slot 2</span>
+                </button>
+                <button
+                  onClick={() => setFilterSlot('3')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterSlot === '3'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                  <span className="hidden sm:inline">Slot 3</span>
+                </button>
               </div>
             </div>
 
-            {/* Filtre slot */}
-            <div className="space-y-2">
-              <Label htmlFor="slot">Slot</Label>
-              <Select value={filterSlot} onValueChange={setFilterSlot}>
-                <SelectTrigger id="slot">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tous">Tous les slots</SelectItem>
-                  <SelectItem value="1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-blue-500" />
-                      Slot 1
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="2">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-purple-500" />
-                      Slot 2
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full bg-amber-500" />
-                      Slot 3
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Recherche et réinitialisation */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              {/* Recherche */}
+              <div className="w-full sm:w-48">
+                <Label className="text-xs font-medium mb-2 block">Rechercher</Label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Nom..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 h-10"
+                  />
+                </div>
+              </div>
 
-            {/* Réinitialiser */}
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                onClick={handleResetFilters}
-                className="w-full"
-              >
-                Réinitialiser
-              </Button>
+              {/* Réinitialiser */}
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="h-10 w-full sm:w-auto"
+                >
+                  Réinitialiser
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

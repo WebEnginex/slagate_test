@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Save, Download, Upload, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Save, Download, Upload, AlertTriangle, CheckCircle, RefreshCw, Users } from 'lucide-react';
 // Layout géré par AdminLayout, pas besoin d'import
 import { BuildsSupabaseService } from './services/buildsSupabaseService';
 import { ReferenceDataManager } from '../../utils/referenceDataManager';
@@ -299,13 +299,13 @@ export default function BuildsAdminPage() {
   }
 
   return (
-    <div className="w-full space-y-6">
-        {/* En-tête */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="w-full space-y-4">
+        {/* En-tête compact */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h1 className="text-3xl font-bold">Administration des Builds</h1>
-            <p className="text-muted-foreground">
-              Gestion des configurations de chasseurs
+            <h1 className="text-2xl font-bold">Gestion des Builds</h1>
+            <p className="text-sm text-muted-foreground">
+              Configuration des chasseurs
             </p>
           </div>
           
@@ -313,239 +313,203 @@ export default function BuildsAdminPage() {
             <Button
               onClick={validateBuilds}
               variant="outline"
+              size="sm"
               disabled={loading}
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Valider
+              <CheckCircle className="h-3.5 w-3.5 sm:mr-2" />
+              <span className="hidden sm:inline">Valider</span>
             </Button>
             
             <Button
               onClick={() => loadChasseurs()}
+              size="sm"
               disabled={loading}
             >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Actualiser
+              <RefreshCw className="h-3.5 w-3.5 sm:mr-2" />
+              <span className="hidden sm:inline">Actualiser</span>
             </Button>
           </div>
         </div>
 
-        {/* Statistiques */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Statistiques</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold">{chasseurs.length}</div>
-                <div className="text-sm text-muted-foreground">Chasseurs configurés</div>
+        {/* Messages compacts */}
+        {message && (
+          <Alert className={`py-2 ${message.type === 'error' ? 'border-destructive' : message.type === 'warning' ? 'border-yellow-500' : 'border-green-500'}`}>
+            <div className="flex items-center gap-2">
+              {message.type === 'error' ? (
+                <AlertTriangle className="h-3.5 w-3.5" />
+              ) : (
+                <CheckCircle className="h-3.5 w-3.5" />
+              )}
+              <AlertDescription className="text-sm">{message.text}</AlertDescription>
+            </div>
+          </Alert>
+        )}
+
+        {/* Résultats de validation compacts */}
+        {validationResult && (
+          <Card className="bg-sidebar border-sidebar-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                {validationResult.isValid ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-red-500" />
+                )}
+                Validation
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2 flex-wrap">
+                <Badge variant={validationResult.isValid ? "default" : "destructive"} className="text-xs">
+                  {validationResult.isValid ? "Valide" : "Invalide"}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {validationResult.errors.length} erreur(s)
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {validationResult.warnings.length} avertissement(s)
+                </Badge>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {chasseurs.reduce((acc, chasseur) => {
-                    const builds = (chasseur.builds_data as { builds?: Record<string, unknown> })?.builds || {};
-                    return acc + Object.keys(builds).length;
-                  }, 0)}
+
+              {validationResult.errors.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-red-600 mb-1.5 text-sm">Erreurs:</h4>
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    {validationResult.errors.slice(0, 5).map((error, i) => (
+                      <li key={i} className="text-xs text-red-600">{error}</li>
+                    ))}
+                  </ul>
+                  {validationResult.errors.length > 5 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ... et {validationResult.errors.length - 5} autres erreurs
+                    </p>
+                  )}
                 </div>
-                <div className="text-sm text-muted-foreground">Builds totaux</div>
+              )}
+
+              {validationResult.warnings.length > 0 && (
+                <div>
+                  <h4 className="font-medium text-yellow-600 mb-1.5 text-sm">Avertissements:</h4>
+                  <ul className="list-disc pl-4 space-y-0.5">
+                    {validationResult.warnings.slice(0, 3).map((warning, i) => (
+                      <li key={i} className="text-xs text-yellow-600">{warning}</li>
+                    ))}
+                  </ul>
+                  {validationResult.warnings.length > 3 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ... et {validationResult.warnings.length - 3} autres avertissements
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Interface principale - Sélection horizontale */}
+        <Card className="bg-sidebar border-sidebar-border">
+          <CardContent className="p-3 sm:p-4">
+            <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-end">
+              {/* Filtre par élément */}
+              <div className="flex-1">
+                <Label className="text-xs font-medium mb-2 block">
+                  Filtrer par élément
+                </Label>
+                <div className="flex flex-wrap gap-1.5">
+                  {ELEMENT_OPTIONS.map(option => (
+                    <button
+                      key={option.id}
+                      onClick={() => setElementFilter(option.id)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                        elementFilter === option.id
+                          ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                          : 'bg-background border-border hover:bg-accent'
+                      }`}
+                      title={option.label}
+                    >
+                      {option.image && (
+                        <img 
+                          src={option.image} 
+                          alt={option.label}
+                          className="w-4 h-4 rounded object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <span className="hidden sm:inline">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {referenceData?.chasseurs.length || 0}
-                </div>
-                <div className="text-sm text-muted-foreground">Chasseurs disponibles</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold">
-                  {referenceData?.artefacts.length || 0}
-                </div>
-                <div className="text-sm text-muted-foreground">Artefacts disponibles</div>
+
+              {/* Sélection du chasseur */}
+              <div className="w-full lg:w-80 xl:w-96">
+                <Label htmlFor="chasseur-select" className="text-xs font-medium mb-2 block">
+                  Sélectionner un chasseur
+                </Label>
+                
+                {filteredChasseurs.length === 0 ? (
+                  <div className="h-10 flex items-center px-3 rounded-lg border border-border bg-muted">
+                    <p className="text-muted-foreground text-xs">
+                      Aucun chasseur trouvé
+                    </p>
+                  </div>
+                ) : (
+                  <Select 
+                    value={selectedChasseurId?.toString() || ""} 
+                    onValueChange={(value) => setSelectedChasseurId(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-full h-10">
+                      <SelectValue placeholder="Choisir un chasseur">
+                        {selectedChasseurId && (
+                          <ChasseurItem 
+                            chasseur={chasseurs.find(c => c.chasseur_id === selectedChasseurId)!}
+                            referenceData={referenceData}
+                          />
+                        )}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="max-h-80">
+                      {filteredChasseurs.map(chasseur => (
+                        <SelectItem 
+                          key={chasseur.chasseur_id} 
+                          value={chasseur.chasseur_id.toString()}
+                          className="py-2"
+                        >
+                          <ChasseurItem 
+                            chasseur={chasseur}
+                            referenceData={referenceData}
+                          />
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Messages */}
-        {message && (
-          <Alert className={message.type === 'error' ? 'border-destructive' : message.type === 'warning' ? 'border-yellow-500' : 'border-green-500'}>
-            {message.type === 'error' ? (
-              <AlertTriangle className="h-4 w-4" />
-            ) : (
-              <CheckCircle className="h-4 w-4" />
-            )}
-            <AlertDescription>{message.text}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Résultats de validation */}
-        {validationResult && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {validationResult.isValid ? (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5 text-red-500" />
-                )}
-                Résultats de la validation
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <Badge variant={validationResult.isValid ? "default" : "destructive"}>
-                    {validationResult.isValid ? "Valide" : "Invalide"}
-                  </Badge>
-                  <Badge variant="outline">
-                    {validationResult.errors.length} erreur(s)
-                  </Badge>
-                  <Badge variant="outline">
-                    {validationResult.warnings.length} avertissement(s)
-                  </Badge>
-                </div>
-
-                {validationResult.errors.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-red-600 mb-2">Erreurs:</h4>
-                    <ul className="list-disc pl-4 space-y-1">
-                      {validationResult.errors.slice(0, 10).map((error, i) => (
-                        <li key={i} className="text-sm text-red-600">{error}</li>
-                      ))}
-                    </ul>
-                    {validationResult.errors.length > 10 && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        ... et {validationResult.errors.length - 10} autres erreurs
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {validationResult.warnings.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-yellow-600 mb-2">Avertissements:</h4>
-                    <ul className="list-disc pl-4 space-y-1">
-                      {validationResult.warnings.slice(0, 5).map((warning, i) => (
-                        <li key={i} className="text-sm text-yellow-600">{warning}</li>
-                      ))}
-                    </ul>
-                    {validationResult.warnings.length > 5 && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        ... et {validationResult.warnings.length - 5} autres avertissements
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Interface principale */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Sélection et filtrage des chasseurs */}
-          <div className="xl:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Sélection du chasseur</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Filtre par élément avec boutons visuels */}
-                <div>
-                  <Label className="text-sm font-medium mb-3 block">
-                    Filtrer par élément
-                  </Label>
-                  <div className="flex flex-wrap gap-2">
-                    {ELEMENT_OPTIONS.map(option => (
-                      <button
-                        key={option.id}
-                        onClick={() => setElementFilter(option.id)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 hover:scale-105 ${
-                          elementFilter === option.id
-                            ? 'bg-primary border-primary text-primary-foreground shadow-lg'
-                            : 'bg-background border-border hover:bg-accent'
-                        }`}
-                      >
-                        {option.image && (
-                          <img 
-                            src={option.image} 
-                            alt={option.label}
-                            className="w-5 h-5 rounded object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        )}
-                        <span className="text-sm font-medium">{option.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sélection du chasseur */}
-                <div>
-                  <Label htmlFor="chasseur-select" className="text-sm font-medium">
-                    Chasseur ({filteredChasseurs.length} disponible{filteredChasseurs.length > 1 ? 's' : ''})
-                  </Label>
-                  
-                  {filteredChasseurs.length === 0 ? (
-                    <p className="text-muted-foreground text-sm mt-2">
-                      Aucun chasseur trouvé pour ce filtre
-                    </p>
-                  ) : (
-                    <Select 
-                      value={selectedChasseurId?.toString() || ""} 
-                      onValueChange={(value) => setSelectedChasseurId(parseInt(value))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Choisir un chasseur">
-                          {selectedChasseurId && (
-                            <ChasseurItem 
-                              chasseur={chasseurs.find(c => c.chasseur_id === selectedChasseurId)!}
-                              referenceData={referenceData}
-                            />
-                          )}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="max-h-80">
-                        {filteredChasseurs.map(chasseur => (
-                          <SelectItem 
-                            key={chasseur.chasseur_id} 
-                            value={chasseur.chasseur_id.toString()}
-                            className="py-3"
-                          >
-                            <ChasseurItem 
-                              chasseur={chasseur}
-                              referenceData={referenceData}
-                            />
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+        {/* Éditeur de builds - Pleine largeur */}
+        <div className="w-full">
+          {selectedChasseurData ? (
+            <ModernBuildEditor
+              chasseurData={selectedChasseurData}
+              referenceData={referenceData}
+              onSave={(buildName: string, buildData: Record<string, unknown>, originalBuildName?: string) => saveBuild(selectedChasseurData.chasseur_id, buildName, buildData, originalBuildName)}
+              onDelete={(buildName: string) => removeBuild(selectedChasseurData.chasseur_id, buildName)}
+            />
+          ) : (
+            <Card className="bg-sidebar border-sidebar-border">
+              <CardContent className="flex items-center justify-center py-16 sm:py-24">
+                <div className="text-center text-muted-foreground space-y-2">
+                  <Users className="h-12 w-12 mx-auto opacity-50" />
+                  <p className="text-sm">Sélectionnez un chasseur pour commencer</p>
                 </div>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Éditeur de builds moderne */}
-          <div className="xl:col-span-2">
-            {selectedChasseurData ? (
-              <ModernBuildEditor
-                chasseurData={selectedChasseurData}
-                referenceData={referenceData}
-                onSave={(buildName: string, buildData: Record<string, unknown>, originalBuildName?: string) => saveBuild(selectedChasseurData.chasseur_id, buildName, buildData, originalBuildName)}
-                onDelete={(buildName: string) => removeBuild(selectedChasseurData.chasseur_id, buildName)}
-              />
-            ) : (
-              <Card>
-                <CardContent className="flex items-center justify-center min-h-96">
-                  <div className="text-center text-muted-foreground">
-                    <p>Sélectionnez un chasseur pour commencer l'édition des builds</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          )}
         </div>
 
     </div>

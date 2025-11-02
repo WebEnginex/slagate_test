@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Menu, User } from "lucide-react";
+import { Settings, LogOut, Menu, User, ChevronDown, Database, Users, Zap, Swords, LayoutDashboard, Trophy, Gift, Shield } from "lucide-react";
 import { useAuth } from "@/admin/auth/hooks/useAuth";
 import SideNav from "@/components/SideNav";
 
@@ -24,15 +24,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const adminNavItems = [
-    { to: "/admin", label: "Dashboard", exact: true, color: "bg-solo-purple hover:bg-solo-purple/90" },
-    { to: "/admin/builds", label: "Builds", color: "bg-violet-600 hover:bg-violet-700" },
-    { to: "/admin/chasseurs", label: "Chasseurs", color: "bg-blue-600 hover:bg-blue-700" },
-    { to: "/admin/artefacts", label: "Artefacts", color: "bg-green-600 hover:bg-green-700" },
-    { to: "/admin/noyaux", label: "Noyaux", color: "bg-amber-600 hover:bg-amber-700" },
-    { to: "/admin/armes", label: "Armes", color: "bg-red-600 hover:bg-red-700" },
-    { to: "/admin/promo-codes", label: "Codes Promo", color: "bg-pink-600 hover:bg-pink-700" },
-    { to: "/admin/tier-list", label: "Tier List", color: "bg-purple-600 hover:bg-purple-700" },
+    { to: "/admin", label: "Dashboard", exact: true, activeColor: "bg-solo-purple", hoverColor: "hover:bg-solo-purple/80", icon: <LayoutDashboard className="h-4 w-4 mr-1.5" /> },
+    { to: "/admin/builds", label: "Builds", activeColor: "bg-indigo-600", hoverColor: "hover:bg-indigo-600/80", icon: <Settings className="h-4 w-4 mr-1.5" /> },
+    { to: "/admin/tier-list", label: "Tier List", activeColor: "bg-amber-600", hoverColor: "hover:bg-amber-600/80", icon: <Trophy className="h-4 w-4 mr-1.5" /> },
+    { to: "/admin/promo-codes", label: "Codes Promo", activeColor: "bg-rose-600", hoverColor: "hover:bg-rose-600/80", icon: <Gift className="h-4 w-4 mr-1.5" /> },
   ];
+
+  const databaseItems = [
+    { to: "/admin/chasseurs", label: "Chasseurs", icon: <Users className="h-4 w-4 mr-2" /> },
+    { to: "/admin/artefacts", label: "Artefacts", icon: <Shield className="h-4 w-4 mr-2" /> },
+    { to: "/admin/noyaux", label: "Noyaux", icon: <Zap className="h-4 w-4 mr-2" /> },
+    { to: "/admin/armes", label: "Armes", icon: <Swords className="h-4 w-4 mr-2" /> },
+  ];
+
+  const isDatabaseActive = databaseItems.some(item => location.pathname.startsWith(item.to));
 
   const handleSignOut = async () => {
     try {
@@ -64,13 +69,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <Card className="mb-6 bg-sidebar border-sidebar-border rounded-xl shadow-md">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  {/* Côté gauche : Titre et Navigation */}
+                  {/* Navigation */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
-                    <div className="flex items-center gap-2 text-solo-purple">
-                      <Settings className="h-5 w-5" />
-                      <span className="font-semibold">Administration</span>
-                    </div>
-                    
                     {/* Navigation admin */}
                     <nav className="flex flex-wrap gap-2">
                       {adminNavItems.map((item) => {
@@ -84,14 +84,43 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                             asChild
                             variant={isActive ? "default" : "ghost"}
                             size="sm"
-                            className={isActive ? `${item.color} text-white` : ""}
+                            className={isActive ? `${item.activeColor} text-white` : `${item.hoverColor} text-white/80`}
                           >
-                            <Link to={item.to}>
+                            <Link to={item.to} className="flex items-center">
+                              {item.icon}
                               {item.label}
                             </Link>
                           </Button>
                         );
                       })}
+                      
+                      {/* Dropdown Base de Données */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant={isDatabaseActive ? "default" : "ghost"}
+                            size="sm"
+                            className={isDatabaseActive ? "bg-blue-600 text-white" : "hover:bg-blue-600/80 text-white/80"}
+                          >
+                            <Database className="h-4 w-4 mr-1.5" />
+                            Base de Données
+                            <ChevronDown className="h-3 w-3 ml-1" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-48 bg-sidebar border-sidebar-border">
+                          {databaseItems.map((item) => (
+                            <DropdownMenuItem key={item.to} asChild className="cursor-pointer">
+                              <Link 
+                                to={item.to}
+                                className="flex items-center w-full text-white hover:bg-blue-600/20"
+                              >
+                                {item.icon}
+                                {item.label}
+                              </Link>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </nav>
                   </div>
                 </div>

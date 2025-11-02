@@ -185,28 +185,24 @@ export const AdminArtefactsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Package className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Gestion des Artefacts</h1>
-            <p className="text-muted-foreground">
-              {artefacts.length} artefact{artefacts.length > 1 ? 's' : ''} au total
-              {filteredArtefacts.length !== artefacts.length &&
-                ` • ${filteredArtefacts.length} affiché${filteredArtefacts.length > 1 ? 's' : ''}`}
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* En-tête compact */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Gestion des Artefacts</h1>
+          <p className="text-sm text-muted-foreground">
+            {filteredArtefacts.length !== artefacts.length &&
+              `${filteredArtefacts.length} / `}{artefacts.length} artefact{artefacts.length > 1 ? 's' : ''}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadArtefacts} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Actualiser
+          <Button variant="outline" size="sm" onClick={loadArtefacts} disabled={isLoading}>
+            <RefreshCw className={`w-4 h-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Actualiser</span>
           </Button>
-          <Button onClick={handleCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouvel artefact
+          <Button size="sm" onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nouvel artefact</span>
           </Button>
         </div>
       </div>
@@ -219,114 +215,200 @@ export const AdminArtefactsPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Filtres */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Recherche */}
-            <div className="space-y-2">
-              <Label htmlFor="search">Rechercher</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Nom de l'artefact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
+      {/* Filtres horizontaux */}
+      <Card className="bg-sidebar border-sidebar-border">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Catégories */}
+            <div className="flex-1">
+              <Label className="text-xs font-medium mb-2 block text-muted-foreground">
+                Catégorie
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setFilterCategorie('tous')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'tous'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <span>Tous</span>
+                </button>
+                <button
+                  onClick={() => setFilterCategorie('Casque')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'Casque'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  {categorieIcons['Casque'] && (
+                    <img 
+                      src={categorieIcons['Casque']}
+                      alt="Casque"
+                      className="w-4 h-4 rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="hidden sm:inline">Casque</span>
+                </button>
+                <button
+                  onClick={() => setFilterCategorie('Armure')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'Armure'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  {categorieIcons['Armure'] && (
+                    <img 
+                      src={categorieIcons['Armure']}
+                      alt="Armure"
+                      className="w-4 h-4 rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="hidden sm:inline">Armure</span>
+                </button>
+                <button
+                  onClick={() => setFilterCategorie('Gants')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'Gants'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  {categorieIcons['Gants'] && (
+                    <img 
+                      src={categorieIcons['Gants']}
+                      alt="Gants"
+                      className="w-4 h-4 rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="hidden sm:inline">Gants</span>
+                </button>
+                <button
+                  onClick={() => setFilterCategorie('Bottes')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'Bottes'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  {categorieIcons['Bottes'] && (
+                    <img 
+                      src={categorieIcons['Bottes']}
+                      alt="Bottes"
+                      className="w-4 h-4 rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="hidden sm:inline">Bottes</span>
+                </button>
+                <button
+                  onClick={() => setFilterCategorie('Collier')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'Collier'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  {categorieIcons['Collier'] && (
+                    <img 
+                      src={categorieIcons['Collier']}
+                      alt="Collier"
+                      className="w-4 h-4 rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="hidden sm:inline">Collier</span>
+                </button>
+                <button
+                  onClick={() => setFilterCategorie('Bracelet')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'Bracelet'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  {categorieIcons['Bracelet'] && (
+                    <img 
+                      src={categorieIcons['Bracelet']}
+                      alt="Bracelet"
+                      className="w-4 h-4 rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="hidden sm:inline">Bracelet</span>
+                </button>
+                <button
+                  onClick={() => setFilterCategorie('Bague')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'Bague'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  {categorieIcons['Bague'] && (
+                    <img 
+                      src={categorieIcons['Bague']}
+                      alt="Bague"
+                      className="w-4 h-4 rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="hidden sm:inline">Bague</span>
+                </button>
+                <button
+                  onClick={() => setFilterCategorie('Boucles')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterCategorie === 'Boucles'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  {categorieIcons['Boucles'] && (
+                    <img 
+                      src={categorieIcons['Boucles']}
+                      alt="Boucles"
+                      className="w-4 h-4 rounded object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <span className="hidden sm:inline">Boucles</span>
+                </button>
               </div>
             </div>
 
-            {/* Filtre catégorie */}
-            <div className="space-y-2">
-              <Label htmlFor="categorie">Catégorie</Label>
-              <Select value={filterCategorie} onValueChange={setFilterCategorie}>
-                <SelectTrigger id="categorie">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tous">Toutes les catégories</SelectItem>
-                  <SelectItem value="Casque">
-                    <div className="flex items-center gap-2">
-                      {categorieIcons['Casque'] && (
-                        <img src={categorieIcons['Casque']} alt="Casque" className="w-4 h-4 rounded" />
-                      )}
-                      Casque
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Armure">
-                    <div className="flex items-center gap-2">
-                      {categorieIcons['Armure'] && (
-                        <img src={categorieIcons['Armure']} alt="Armure" className="w-4 h-4 rounded" />
-                      )}
-                      Armure
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Gants">
-                    <div className="flex items-center gap-2">
-                      {categorieIcons['Gants'] && (
-                        <img src={categorieIcons['Gants']} alt="Gants" className="w-4 h-4 rounded" />
-                      )}
-                      Gants
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Bottes">
-                    <div className="flex items-center gap-2">
-                      {categorieIcons['Bottes'] && (
-                        <img src={categorieIcons['Bottes']} alt="Bottes" className="w-4 h-4 rounded" />
-                      )}
-                      Bottes
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Collier">
-                    <div className="flex items-center gap-2">
-                      {categorieIcons['Collier'] && (
-                        <img src={categorieIcons['Collier']} alt="Collier" className="w-4 h-4 rounded" />
-                      )}
-                      Collier
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Bracelet">
-                    <div className="flex items-center gap-2">
-                      {categorieIcons['Bracelet'] && (
-                        <img src={categorieIcons['Bracelet']} alt="Bracelet" className="w-4 h-4 rounded" />
-                      )}
-                      Bracelet
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Bague">
-                    <div className="flex items-center gap-2">
-                      {categorieIcons['Bague'] && (
-                        <img src={categorieIcons['Bague']} alt="Bague" className="w-4 h-4 rounded" />
-                      )}
-                      Bague
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="Boucles">
-                    <div className="flex items-center gap-2">
-                      {categorieIcons['Boucles'] && (
-                        <img src={categorieIcons['Boucles']} alt="Boucles" className="w-4 h-4 rounded" />
-                      )}
-                      Boucles d'oreilles
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Recherche et réinitialisation */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              {/* Recherche */}
+              <div className="w-full sm:w-48">
+                <Label className="text-xs font-medium mb-2 block">Rechercher</Label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Nom..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 h-10"
+                  />
+                </div>
+              </div>
 
-            {/* Réinitialiser */}
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                onClick={handleResetFilters}
-                className="w-full"
-              >
-                Réinitialiser
-              </Button>
+              {/* Réinitialiser */}
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="h-10 w-full sm:w-auto"
+                >
+                  Réinitialiser
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

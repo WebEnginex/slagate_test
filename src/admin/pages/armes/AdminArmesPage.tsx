@@ -173,42 +173,25 @@ const AdminArmesPageComponent: React.FC = () => {
     setFilterElement('tous');
   };
 
-  // Compter les armes par élément
-  const countByElement = (element: string) => {
-    return armes.filter(a => {
-      const armeElement = a.element || a.arme_element;
-      return armeElement === element;
-    }).length;
-  };
-
-  // Compter les armes sans élément
-  const countWithoutElement = () => {
-    return armes.filter(a => !a.element && !a.arme_element).length;
-  };
-
   return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Swords className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Gestion des Armes</h1>
-            <p className="text-muted-foreground">
-              {armes.length} arme{armes.length > 1 ? 's' : ''} au total
-              {filteredArmes.length !== armes.length &&
-                ` • ${filteredArmes.length} affichée${filteredArmes.length > 1 ? 's' : ''}`}
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* En-tête compact */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Gestion des Armes</h1>
+          <p className="text-sm text-muted-foreground">
+            {filteredArmes.length !== armes.length &&
+              `${filteredArmes.length} / `}{armes.length} arme{armes.length > 1 ? 's' : ''}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadArmes} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Actualiser
+          <Button variant="outline" size="sm" onClick={loadArmes} disabled={isLoading}>
+            <RefreshCw className={`w-4 h-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Actualiser</span>
           </Button>
-          <Button onClick={handleCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouvelle Arme
+          <Button size="sm" onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nouvelle Arme</span>
           </Button>
         </div>
       </div>
@@ -221,111 +204,136 @@ const AdminArmesPageComponent: React.FC = () => {
         </Alert>
       )}
 
-      {/* Statistiques */}
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Swords className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{armes.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">🔥 Feu</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{countByElement('Feu')}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">💧 Eau</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{countByElement('Eau')}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">💨 Vent</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{countByElement('Vent')}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">☀️ Lumière</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{countByElement('Lumière')}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">🌙 Ténèbres</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{countByElement('Ténèbres')}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filtres */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            {/* Recherche */}
-            <div className="space-y-2">
-              <Label htmlFor="search">Rechercher</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  type="text"
-                  placeholder="Nom de l'arme..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
+      {/* Filtres horizontaux */}
+      <Card className="bg-sidebar border-sidebar-border">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Éléments */}
+            <div className="flex-1">
+              <Label className="text-xs font-medium mb-2 block text-muted-foreground">
+                Élément
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setFilterElement('tous')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'tous'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <span>Tous</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Feu')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Feu'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Feu_element.webp"
+                    alt="Feu"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Feu</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Eau')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Eau'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Eau_element.webp"
+                    alt="Eau"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Eau</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Vent')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Vent'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Vent_element.webp"
+                    alt="Vent"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Vent</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Lumière')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Lumière'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Lumiere_element.webp"
+                    alt="Lumière"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Lumière</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Ténèbres')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Ténèbres'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Tenebre_element.webp"
+                    alt="Ténèbres"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Ténèbres</span>
+                </button>
               </div>
             </div>
 
-            {/* Filtre élément */}
-            <div className="space-y-2">
-              <Label htmlFor="filter-element">Élément</Label>
-              <Select value={filterElement} onValueChange={setFilterElement}>
-                <SelectTrigger id="filter-element">
-                  <SelectValue placeholder="Tous les éléments" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tous">Tous les éléments</SelectItem>
-                  <SelectItem value="Feu">🔥 Feu</SelectItem>
-                  <SelectItem value="Eau">💧 Eau</SelectItem>
-                  <SelectItem value="Vent">💨 Vent</SelectItem>
-                  <SelectItem value="Lumière">☀️ Lumière</SelectItem>
-                  <SelectItem value="Ténèbres">🌙 Ténèbres</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Recherche et réinitialisation */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              {/* Recherche */}
+              <div className="w-full sm:w-48">
+                <Label className="text-xs font-medium mb-2 block">Rechercher</Label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Nom..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 h-10"
+                  />
+                </div>
+              </div>
 
-            {/* Bouton reset */}
-            <div className="space-y-2">
-              <Label>&nbsp;</Label>
-              <Button variant="outline" onClick={handleResetFilters} className="w-full">
-                Réinitialiser
-              </Button>
+              {/* Réinitialiser */}
+              <div className="flex items-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="h-10 w-full sm:w-auto"
+                >
+                  Réinitialiser
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

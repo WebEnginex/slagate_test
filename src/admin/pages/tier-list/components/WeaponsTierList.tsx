@@ -329,17 +329,18 @@ export const WeaponsTierList: React.FC = () => {
             <Button
               onClick={saveTierList}
               disabled={saving}
-              className="bg-violet-600 hover:bg-violet-700 text-white"
+              size="sm"
+              className="bg-amber-600 hover:bg-amber-700 text-white"
             >
               {saving ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Sauvegarde...
+                  <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
+                  <span className="hidden sm:inline">Sauvegarde...</span>
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Sauvegarder
+                  <Save className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Sauvegarder</span>
                 </>
               )}
             </Button>

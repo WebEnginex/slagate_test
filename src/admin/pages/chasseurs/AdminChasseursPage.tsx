@@ -38,7 +38,8 @@ export const AdminChasseursPage: React.FC = () => {
   // Filtres
   const [searchTerm, setSearchTerm] = useState('');
   const [filterElement, setFilterElement] = useState<string>('tous');
-  const [filterRarete, setFilterRarete] = useState<string>('tous');
+  const [filterRarity, setFilterRarity] = useState<string>('tous');
+  const [filterJinwoo, setFilterJinwoo] = useState(false);
 
   // Éditeur
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -98,8 +99,13 @@ export const AdminChasseursPage: React.FC = () => {
     }
 
     // Filtre par rareté
-    if (filterRarete !== 'tous') {
-      filtered = filtered.filter((c) => c.rarete === filterRarete);
+    if (filterRarity !== 'tous') {
+      filtered = filtered.filter((c) => c.rarete === filterRarity);
+    }
+
+    // Filtre Sung Jinwoo
+    if (filterJinwoo) {
+      filtered = filtered.filter((c) => c.nom.toLowerCase() === 'sung jinwoo');
     }
 
     // Tri : Sung Jinwoo en premier, puis par ID décroissant
@@ -116,7 +122,7 @@ export const AdminChasseursPage: React.FC = () => {
     });
 
     setFilteredChasseurs(filtered);
-  }, [chasseurs, searchTerm, filterElement, filterRarete]);
+  }, [chasseurs, searchTerm, filterElement, filterRarity, filterJinwoo]);
 
   // Ouvrir l'éditeur pour création
   const handleCreate = () => {
@@ -187,32 +193,30 @@ export const AdminChasseursPage: React.FC = () => {
   const handleResetFilters = () => {
     setSearchTerm('');
     setFilterElement('tous');
-    setFilterRarete('tous');
+    setFilterRarity('tous');
+    setFilterJinwoo(false);
   };
 
   return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Users className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Gestion des Chasseurs</h1>
-            <p className="text-muted-foreground">
-              {chasseurs.length} chasseur{chasseurs.length > 1 ? 's' : ''} au total
-              {filteredChasseurs.length !== chasseurs.length &&
-                ` • ${filteredChasseurs.length} affiché${filteredChasseurs.length > 1 ? 's' : ''}`}
-            </p>
-          </div>
+    <div className="space-y-4">
+      {/* En-tête compact */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Gestion des Chasseurs</h1>
+          <p className="text-sm text-muted-foreground">
+            {chasseurs.length} chasseur{chasseurs.length > 1 ? 's' : ''}
+            {filteredChasseurs.length !== chasseurs.length &&
+              ` • ${filteredChasseurs.length} affiché${filteredChasseurs.length > 1 ? 's' : ''}`}
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadChasseurs} disabled={isLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Actualiser
+          <Button variant="outline" size="sm" onClick={loadChasseurs} disabled={isLoading}>
+            <RefreshCw className={`w-4 h-4 sm:mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Actualiser</span>
           </Button>
-          <Button onClick={handleCreate}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau chasseur
+          <Button size="sm" onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nouveau</span>
           </Button>
         </div>
       </div>
@@ -225,70 +229,171 @@ export const AdminChasseursPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Filtres */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Recherche */}
-            <div className="space-y-2">
-              <Label htmlFor="search">Rechercher</Label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Nom du chasseur..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
+      {/* Filtres horizontaux compacts */}
+      <Card className="bg-sidebar border-sidebar-border">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 lg:items-end">
+            {/* Filtre par élément avec icônes */}
+            <div className="flex-1">
+              <Label className="text-xs font-medium mb-2 block">
+                Filtrer par élément
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => setFilterElement('tous')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'tous'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <span>Tous</span>
+                </button>
+                
+                {/* Filtre spécial Sung Jinwoo */}
+                <button
+                  onClick={() => setFilterJinwoo(!filterJinwoo)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterJinwoo
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/chasseurs_body/Sung%20Jinwoo%20(Ombre).webp"
+                    alt="Sung Jinwoo"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Sung Jinwoo</span>
+                </button>
+                
+                <button
+                  onClick={() => setFilterElement('Feu')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Feu'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Feu_element.webp"
+                    alt="Feu"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Feu</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Eau')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Eau'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Eau_element.webp"
+                    alt="Eau"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Eau</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Vent')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Vent'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Vent_element.webp"
+                    alt="Vent"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Vent</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Lumière')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Lumière'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Lumiere_element.webp"
+                    alt="Lumière"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Lumière</span>
+                </button>
+                <button
+                  onClick={() => setFilterElement('Ténèbres')}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all duration-200 hover:scale-105 ${
+                    filterElement === 'Ténèbres'
+                      ? 'bg-solo-purple border-solo-purple text-white shadow-lg'
+                      : 'bg-background border-border hover:bg-accent'
+                  }`}
+                >
+                  <img 
+                    src="https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements//Tenebre_element.webp"
+                    alt="Ténèbres"
+                    className="w-4 h-4 rounded object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="hidden sm:inline">Ténèbres</span>
+                </button>
               </div>
             </div>
 
-            {/* Filtre élément */}
-            <div className="space-y-2">
-              <Label htmlFor="element">Élément</Label>
-              <Select value={filterElement} onValueChange={setFilterElement}>
-                <SelectTrigger id="element">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tous">Tous les éléments</SelectItem>
-                  <SelectItem value="Feu">🔥 Feu</SelectItem>
-                  <SelectItem value="Eau">💧 Eau</SelectItem>
-                  <SelectItem value="Vent">🌪️ Vent</SelectItem>
-                  <SelectItem value="Lumière">✨ Lumière</SelectItem>
-                  <SelectItem value="Ténèbres">🌑 Ténèbres</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Filtre rareté et recherche */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              {/* Recherche */}
+              <div className="w-full sm:w-48">
+                <Label className="text-xs font-medium mb-2 block">Rechercher</Label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Nom..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 h-10 text-sm"
+                  />
+                </div>
+              </div>
 
-            {/* Filtre rareté */}
-            <div className="space-y-2">
-              <Label htmlFor="rarete">Rareté</Label>
-              <Select value={filterRarete} onValueChange={setFilterRarete}>
-                <SelectTrigger id="rarete">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tous">Toutes les raretés</SelectItem>
-                  <SelectItem value="SR">SR</SelectItem>
-                  <SelectItem value="SSR">SSR</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Rareté */}
+              <div className="w-full sm:w-32">
+                <Label className="text-xs font-medium mb-2 block">Rareté</Label>
+                <Select value={filterRarity} onValueChange={setFilterRarity}>
+                  <SelectTrigger className="h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tous">Toutes</SelectItem>
+                    <SelectItem value="SR">SR</SelectItem>
+                    <SelectItem value="SSR">SSR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Réinitialiser */}
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                onClick={handleResetFilters}
-                className="w-full"
-              >
-                Réinitialiser
-              </Button>
+              {/* Réinitialiser */}
+              <div className="w-full sm:w-auto">
+                <Label className="text-xs font-medium mb-2 block sm:invisible">Action</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="w-full sm:w-auto h-10"
+                >
+                  Réinitialiser
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>

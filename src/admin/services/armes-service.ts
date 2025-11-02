@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
-import type { JinwooArme, CreateArmeData, UpdateArmeData, ElementArme, ELEMENT_ARME_ICONS } from '@/admin/types';
+import type { JinwooArme, CreateArmeData, UpdateArmeData, ElementArme } from '@/admin/types';
 import { ELEMENT_ARME_ICONS as ELEMENT_ICONS_MAP } from '@/admin/types';
 
 const BUCKET_NAME = 'armes';

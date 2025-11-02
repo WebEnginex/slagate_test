@@ -35,7 +35,9 @@ export function formatPromoCodeDate(isoDate: string | null): string {
     
     return `${day} ${month} à ${formattedTime}`;
   } catch (error) {
-    console.error('Erreur lors du formatage de la date:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Erreur lors du formatage de la date:', error);
+    }
     return 'Date invalide';
   }
 }
@@ -74,7 +76,9 @@ export function parseFrenchDateToISO(frenchDate: string, year?: number): string 
     const date = new Date(currentYear, monthIndex, day, hours, minutes);
     return date.toISOString();
   } catch (error) {
-    console.error('Erreur lors du parsing de la date française:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Erreur lors du parsing de la date française:', error);
+    }
     return null;
   }
 }
@@ -95,7 +99,9 @@ export function isPromoCodeExpired(expiresAt: string | null): boolean {
     const now = new Date();
     return expirationDate < now;
   } catch (error) {
-    console.error('Erreur lors de la vérification d\'expiration:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Erreur lors de la vérification d\'expiration:', error);
+    }
     return false; // En cas d'erreur, considérer comme non expiré
   }
 }
@@ -184,7 +190,9 @@ export function formatDateForInput(isoDate: string | null): string {
     
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   } catch (error) {
-    console.error('Erreur lors du formatage de la date pour input:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Erreur lors du formatage de la date pour input:', error);
+    }
     return '';
   }
 }

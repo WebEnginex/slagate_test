@@ -73,10 +73,14 @@ export const ChasseursTierList: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        console.log("Chargement des chasseurs...");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Chargement des chasseurs...");
+        }
         // Charger tous les chasseurs
         const chasseurs = await ChasseursTierListService.getAllChasseurs();
-        console.log("Chasseurs chargés:", chasseurs.length);
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Chasseurs chargés:", chasseurs.length);
+        }
         
         // Trier les chasseurs par rareté (SSR > SR > R > autres)
         const chasseursTries = chasseurs.sort((a, b) => {
@@ -162,7 +166,9 @@ export const ChasseursTierList: React.FC = () => {
         const categoriesWithData = await Promise.all(
           initialCategories.map(async (category) => {
             const tierListData = await ChasseursTierListService.getTierListByCategory(category.category);
-            console.log(`Tier list data pour ${category.category}:`, tierListData);
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`Tier list data pour ${category.category}:`, tierListData);
+            }
             
             // Organiser les chasseurs par tier
             const updatedTiers = category.tiers.map(tier => ({
@@ -203,13 +209,17 @@ export const ChasseursTierList: React.FC = () => {
       category.tiers.forEach(tier => {
         tier.chasseurs.forEach(chasseur => {
           allRankedChasseurIds.add(chasseur.id);
-          console.log(`Chasseur ${chasseur.nom} (ID: ${chasseur.id}) assigné à ${category.category} tier ${tier.rank}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Chasseur ${chasseur.nom} (ID: ${chasseur.id}) assigné à ${category.category} tier ${tier.rank}`);
+          }
         });
       });
     });
 
     const unranked = allChasseurs.filter(chasseur => !allRankedChasseurIds.has(chasseur.id));
-    console.log(`Chasseurs non classés pour ${activeCategory}:`, unranked.length, 'sur', allChasseurs.length);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Chasseurs non classés pour ${activeCategory}:`, unranked.length, 'sur', allChasseurs.length);
+    }
     
     return unranked;
   };
@@ -254,20 +264,28 @@ export const ChasseursTierList: React.FC = () => {
     const overId = over.id as string;
 
     try {
-      console.log("Drag & Drop - Active ID:", activeId, "Over ID:", overId);
+      if (process.env.NODE_ENV === 'development') {
+        console.log("Drag & Drop - Active ID:", activeId, "Over ID:", overId);
+      }
       
       // Distinguer les zones de drop des éléments draggables
       if (overId === "pool") {
-        console.log("Retrait vers pool");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Retrait vers pool");
+        }
         await removeChasseurFromTier(activeId);
       } else if (overId.startsWith("tier-") && !overId.includes("-", overId.indexOf("-") + 1)) {
         // Zone de drop tier (tier-S) vs élément draggable (tier-S-123)
         const targetRank = overId.replace("tier-", "") as TierRank;
-        console.log("Déplacement vers tier:", targetRank);
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Déplacement vers tier:", targetRank);
+        }
         await moveChasseurToTier(activeId, targetRank);
       } else if (overId.startsWith("tier-") || overId.startsWith("pool-")) {
         // Réorganisation : déposé sur un autre chasseur
-        console.log("Réorganisation dans tier");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Réorganisation dans tier");
+        }
         const targetChasseurId = parseInt(overId.split('-').pop() || '0');
         await reorderChasseursInTier(activeId, targetChasseurId);
       }
@@ -392,7 +410,9 @@ export const ChasseursTierList: React.FC = () => {
         throw new Error("Catégorie non trouvée");
       }
 
-      console.log(`Sauvegarde de la tier list pour la catégorie: ${activeCategory}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Sauvegarde de la tier list pour la catégorie: ${activeCategory}`);
+      }
       
       // Préparer les données à sauvegarder pour la catégorie active
       // Note: Les chasseurs sont déjà supprimés des autres catégories lors des déplacements
@@ -417,7 +437,9 @@ export const ChasseursTierList: React.FC = () => {
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-          console.log(`Tier list sauvegardée avec succès pour ${activeCategory}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Tier list sauvegardée avec succès pour ${activeCategory}`);
+      }
     } catch (err) {
       console.error("Erreur lors de la sauvegarde:", err);
       setError("Erreur lors de la sauvegarde de la tier list");
@@ -510,27 +532,29 @@ export const ChasseursTierList: React.FC = () => {
               )}
             </Card>
 
-            {/* Debug - Bouton de reset */}
-            <Card className="bg-sidebar border-sidebar-border rounded-xl shadow-md">
-              <CardHeader className="bg-red-900/20 py-3 sm:py-4 px-3 sm:px-5 border-b border-red-500/40">
-                <CardTitle className="flex items-center justify-between text-white">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-bold text-red-400">⚠️ Debug - Réinitialiser</span>
-                  </div>
-                  <Button
-                    onClick={clearAllData}
-                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-md text-white"
-                  >
-                    Réinitialiser toutes les tier lists
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3 sm:p-4 md:p-6">
-                <p className="text-sm text-gray-400">
-                  Si vous voyez des chasseurs dupliqués entre les catégories, utilisez ce bouton pour nettoyer les données corrompues.
-                </p>
-              </CardContent>
-            </Card>
+            {/* Debug - Bouton de reset (visible uniquement en développement) */}
+            {process.env.NODE_ENV === 'development' && (
+              <Card className="bg-sidebar border-sidebar-border rounded-xl shadow-md">
+                <CardHeader className="bg-red-900/20 py-3 sm:py-4 px-3 sm:px-5 border-b border-red-500/40">
+                  <CardTitle className="flex items-center justify-between text-white">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-red-400">⚠️ Debug - Réinitialiser</span>
+                    </div>
+                    <Button
+                      onClick={clearAllData}
+                      className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-md text-white"
+                    >
+                      Réinitialiser toutes les tier lists
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-4 md:p-6">
+                  <p className="text-sm text-gray-400">
+                    Si vous voyez des chasseurs dupliqués entre les catégories, utilisez ce bouton pour nettoyer les données corrompues.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             <DndContext
               sensors={sensors}

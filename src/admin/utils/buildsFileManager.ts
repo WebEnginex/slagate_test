@@ -14,8 +14,8 @@ try {
   // Ignorer les erreurs d'import dans le navigateur
 }
 
-import type { ChasseurBuild } from '../config/builds/buildsChasseurs';
-import type { EditorReferenceData, BuildValidationResult } from './types';
+import type { ChasseurBuild } from '../../config/builds/buildsChasseurs';
+import type { EditorReferenceData, BuildValidationResult } from '../types';
 
 // Chemins des fichiers (seulement disponibles côté serveur)
 const BUILDS_FILE_PATH = path?.resolve(process.cwd?.() || '', 'src/config/builds/buildsChasseurs.ts');
@@ -36,7 +36,9 @@ export class BuildsFileManager {
       const content = await fs.readFile(BUILDS_FILE_PATH, 'utf-8');
       return content;
     } catch (error) {
-      console.error('Erreur lors de la lecture du fichier builds:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erreur lors de la lecture du fichier builds:', error);
+      }
       throw new Error('Impossible de lire le fichier de configuration des builds');
     }
   }
@@ -57,7 +59,9 @@ export class BuildsFileManager {
       const buildsData = eval(`(${exportMatch[1]})`);
       return buildsData as ChasseurBuild[];
     } catch (error) {
-      console.error('Erreur lors du parsing du fichier builds:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Erreur lors du parsing du fichier builds:', error);
+      }
       throw new Error('Format du fichier builds invalide');
     }
   }
@@ -120,7 +124,9 @@ export const buildsChasseurs: ChasseurBuild[] = `;
       const newContent = this.generateBuildsContent(builds);
       await fs.writeFile(BUILDS_FILE_PATH, newContent, 'utf-8');
       
-      console.log(`✅ Fichier builds sauvegardé. Backup créé: ${backupPath}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ Fichier builds sauvegardé. Backup créé: ${backupPath}`);
+      }
     } catch (error) {
       console.error('Erreur lors de l\'écriture du fichier builds:', error);
       throw new Error('Impossible de sauvegarder le fichier de configuration des builds');
@@ -132,7 +138,9 @@ export const buildsChasseurs: ChasseurBuild[] = `;
    */
   static async updateLastModifiedDate(): Promise<void> {
     if (!fs || !LAST_MODIFIED_PATH) {
-      console.warn('Mise à jour de date non disponible dans le navigateur');
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Mise à jour de date non disponible dans le navigateur');
+      }
       return;
     }
     
@@ -147,7 +155,9 @@ export const buildsChasseurs: ChasseurBuild[] = `;
       );
       
       await fs.writeFile(LAST_MODIFIED_PATH, updatedContent, 'utf-8');
-      console.log(`✅ Date de modification mise à jour: ${dateStr}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`✅ Date de modification mise à jour: ${dateStr}`);
+      }
     } catch (error) {
       console.error('Erreur lors de la mise à jour de la date:', error);
       // Ne pas échouer si la mise à jour de la date échoue

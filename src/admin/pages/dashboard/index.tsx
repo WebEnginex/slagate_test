@@ -1,6 +1,6 @@
 import React from 'react';
-import { AdminLayout } from './components/layout/AdminLayout';
-import DashboardPage from './pages/dashboard';
+import { AdminLayout } from '@/admin/components/layout/AdminLayout';
+import DashboardPage from './DashboardPage';
 
 function AdminDashboard() {
   return (

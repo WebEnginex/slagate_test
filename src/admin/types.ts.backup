@@ -1,42 +1,16 @@
 // Import du type existant
 import type { ChasseurBuild } from '../config/builds/buildsChasseurs';
-
-// Importer les types pour utilisation locale
-import type {
-  ArtefactSlot,
-  ElementBuild,
-  StatOption,
-  ElementChasseur,
-  Rarete,
-  CategorieArtefact,
-  SlotNoyau,
-  ElementArme
-} from './constants';
-
-// Réexporter les constantes depuis le fichier centralisé
-export {
+import {
   ARTEFACT_SLOTS,
-  ELEMENTS_BUILD as ELEMENTS,
+  ELEMENTS_BUILD,
   STATS_OPTIONS,
-  ELEMENTS_CHASSEUR as ELEMENT_CHASSEUR_VALUES,
-  RARETES as RARETE_VALUES,
-  CATEGORIES_ARTEFACT as CATEGORIE_ARTEFACT_VALUES,
+  ELEMENTS_CHASSEUR,
+  RARETES,
+  CATEGORIES_ARTEFACT,
   CATEGORIE_ARTEFACT_ICONS,
-  SLOTS_NOYAU as SLOT_NOYAU_VALUES,
-  ELEMENTS_ARME as ELEMENT_ARME_VALUES,
-  ELEMENT_ICONS as ELEMENT_ARME_ICONS
-} from './constants';
-
-// Réexporter les types depuis le fichier centralisé
-export type {
-  ArtefactSlot,
-  ElementBuild as Element,
-  StatOption,
-  ElementChasseur,
-  Rarete,
-  CategorieArtefact,
-  SlotNoyau,
-  ElementArme
+  SLOTS_NOYAU,
+  ELEMENTS_ARME,
+  ELEMENT_ICONS
 } from './constants';
 
 // Types pour l'éditeur de builds
@@ -77,7 +51,23 @@ export interface BuildFormData {
   artefacts: Record<string, ArtefactFormData>;
   noyaux: Record<number, NoyauFormData[]>;
   ombre?: number;
-  sets_bonus: Array<{ id: number }>;
+    sets_bonus: Array<{ id: number }>;
+}
+
+// Réexporter les constantes depuis le fichier centralisé
+export { ARTEFACT_SLOTS, ELEMENTS_BUILD as ELEMENTS, STATS_OPTIONS };
+export type { ArtefactSlot, ElementBuild as Element, StatOption } from './constants';
+
+// Export du type existant pour réutilisation
+export type { ChasseurBuild } from '../config/builds/buildsChasseurs';
+
+// ========================================
+// Types pour la gestion des chasseurs
+// ========================================
+
+// Réexporter les constantes depuis le fichier centralisé
+export { ELEMENTS_CHASSEUR as ELEMENT_CHASSEUR_VALUES, RARETES as RARETE_VALUES };
+export type { ElementChasseur, Rarete } from './constants';
 }
 
 // Type pour les données de builds de chasseur avec index signature
@@ -91,12 +81,79 @@ export interface ChasseurBuildFormData {
   builds: BuildFormData[];
 }
 
+// Slots d'artefacts possibles
+export const ARTEFACT_SLOTS = [
+  "casque",
+  "armure", 
+  "gants",
+  "bottes",
+  "collier",
+  "bracelet",
+  "bague",
+  "boucles"
+] as const;
+
+export type ArtefactSlot = typeof ARTEFACT_SLOTS[number];
+
+// Elements possibles
+export const ELEMENTS = [
+  "feu",
+  "eau", 
+  "vent",
+  "lumiere",
+  "tenebres",
+  "jinwoo"
+] as const;
+
+export type Element = typeof ELEMENTS[number];
+
+// Stats possibles
+export const STATS_OPTIONS = [
+  "Force",
+  "Vitalité", 
+  "Agilité",
+  "Intelligence",
+  "Perception",
+  "PV supplémentaire",
+  "Défense supplémentaire", 
+  "PM",
+  "Attaque supplémentaire",
+  "Précision",
+  "Taux de coup critique",
+  "Dégâts de coup critique",
+  "Hausse des dégâts",
+  "Pénétration de défense",
+  "Réduction des dégâts",
+  "Hausse des soins donnés",
+  "Hausse des soins reçus",
+  "Hausse du taux de récupération des PM",
+  "Baisse du coût de PM"
+] as const;
+
+export type StatOption = typeof STATS_OPTIONS[number];
+
 // Export du type existant pour réutilisation
 export type { ChasseurBuild } from '../config/builds/buildsChasseurs';
 
 // ========================================
 // Types pour la gestion des chasseurs
 // ========================================
+
+// Eléments possibles pour un chasseur
+export const ELEMENT_CHASSEUR_VALUES = [
+  'Feu',
+  'Vent',
+  'Lumière',
+  'Eau',
+  'Ténèbres'
+] as const;
+
+export type ElementChasseur = typeof ELEMENT_CHASSEUR_VALUES[number];
+
+// Raretés possibles pour un chasseur
+export const RARETE_VALUES = ['SR', 'SSR'] as const;
+
+export type Rarete = typeof RARETE_VALUES[number];
 
 // Interface complète d'un chasseur
 export interface Chasseur {
@@ -132,6 +189,10 @@ export interface UpdateChasseurData {
 // Types pour la gestion des artefacts
 // ========================================
 
+// Réexporter les constantes depuis le fichier centralisé
+export { CATEGORIES_ARTEFACT as CATEGORIE_ARTEFACT_VALUES, CATEGORIE_ARTEFACT_ICONS };
+export type { CategorieArtefact } from './constants';
+
 // Interface complète d'un artefact
 export interface Artefact {
   id: number;
@@ -157,6 +218,10 @@ export interface UpdateArtefactData {
 // ========================================
 // Types pour la gestion des noyaux
 // ========================================
+
+// Réexporter les constantes depuis le fichier centralisé
+export { SLOTS_NOYAU as SLOT_NOYAU_VALUES };
+export type { SlotNoyau } from './constants';
 
 // Interface complète d'un noyau
 export interface Noyau {
@@ -186,6 +251,10 @@ export interface UpdateNoyauData {
 // ========================================
 // Types pour la gestion des armes de Jinwoo
 // ========================================
+
+// Réexporter les constantes depuis le fichier centralisé
+export { ELEMENTS_ARME as ELEMENT_ARME_VALUES, ELEMENT_ICONS as ELEMENT_ARME_ICONS };
+export type { ElementArme } from './constants';
 
 // Interface complète d'une arme de Jinwoo
 export interface JinwooArme {

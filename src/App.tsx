@@ -20,15 +20,15 @@ const TierList = lazy(() => import("@/pages/TierList"));
 const Guides = lazy(() => import("@/pages/Guides"));
 
 // Pages d'administration avec authentification
-const BuildsAdmin = lazy(() => import("@/admin/AdminBuildsPage"));
-const AdminDashboard = lazy(() => import("@/admin/AdminDashboard"));
+const BuildsAdmin = lazy(() => import("@/admin/pages/builds"));
+const AdminDashboard = lazy(() => import("@/admin/pages/dashboard"));
 const PromoCodesAdmin = lazy(() => import("@/admin/pages/promo-codes/PromoCodesAdminPage"));
 const TierListAdmin = lazy(() => import("@/admin/pages/tier-list/TierListAdminPage"));
-const ChasseursAdmin = lazy(() => import("@/admin/AdminChasseursPage"));
-const ArtefactsAdmin = lazy(() => import("@/admin/AdminArtefactsPage"));
-const NoyauxAdmin = lazy(() => import("@/admin/AdminNoyauxPage"));
-const ArmesAdmin = lazy(() => import("@/admin/AdminArmesPage"));
-const ProfilAdmin = lazy(() => import("@/admin/AdminProfilPage"));
+const ChasseursAdmin = lazy(() => import("@/admin/pages/chasseurs"));
+const ArtefactsAdmin = lazy(() => import("@/admin/pages/artefacts"));
+const NoyauxAdmin = lazy(() => import("@/admin/pages/noyaux"));
+const ArmesAdmin = lazy(() => import("@/admin/pages/armes"));
+const ProfilAdmin = lazy(() => import("@/admin/pages/profil"));
 
 // Import des composants d'authentification admin
 import { AdminProtection } from "@/admin/auth/components/AdminProtection";

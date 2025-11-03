@@ -50,12 +50,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden">
       <SideNav isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
 
       {/* Structure verticale pour main seulement (pas de footer) */}
-      <div className="flex flex-col flex-1 min-h-screen">
-        <main className="flex-1 overflow-auto relative lg:ml-64">
+      <div className="flex flex-col flex-1 min-h-screen max-w-full overflow-x-hidden">
+        <main className="flex-1 overflow-auto relative lg:ml-64 max-w-full">
           <button
             className="fixed top-4 left-4 z-30 rounded-md bg-sidebar p-2 text-white lg:hidden"
             onClick={() => setIsMobileOpen(true)}
@@ -64,9 +64,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </button>
           
           {/* Container admin avec largeur complète */}
-          <div className="w-full py-8 px-4 lg:px-8">
+          <div className="w-full py-8 px-4 lg:px-8 max-w-full box-border">
             {/* Navigation admin en haut de la page */}
-            <Card className="mb-6 bg-sidebar border-sidebar-border rounded-xl shadow-md">
+            <Card className="mb-6 bg-sidebar border-sidebar-border rounded-xl shadow-md max-w-full">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   {/* Navigation */}

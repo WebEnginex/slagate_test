@@ -7,11 +7,47 @@ import type { PromoCodeWithRewards } from '@/admin/types/promo-codes';
 
 export class PublicPromoCodesService {
   /**
-   * Récupère tous les codes promo avec leurs récompenses pour affichage public
+   * Supprime automatiquement les codes promo expirés
+   * Retourne le nombre de codes supprimés
+   */
+  private static async cleanupExpiredCodes(): Promise<number> {
+    try {
+      // Supprimer directement les codes expirés via une requête SQL
+      const { data, error } = await supabase
+        .from('promo_codes')
+        .delete()
+        .not('expires_at', 'is', null)
+        .lt('expires_at', new Date().toISOString())
+        .select('id');
+
+      if (error) {
+        console.error('Erreur lors du nettoyage des codes expirés:', error);
+        return 0;
+      }
+
+      const deletedCount = data?.length || 0;
+      if (deletedCount > 0) {
+        console.log(`${deletedCount} code(s) promo expiré(s) supprimé(s)`);
+      }
+
+      return deletedCount;
+    } catch (error) {
+      console.error('Erreur dans cleanupExpiredCodes:', error);
+      // Ne pas faire planter l'application si le nettoyage échoue
+      return 0;
+    }
+  }
+
+  /**
+   * Récupère tous les codes promo actifs avec leurs récompenses pour affichage public
+   * Note: Nettoie automatiquement les codes expirés avant de récupérer
    */
   static async getAllPromoCodes(): Promise<PromoCodeWithRewards[]> {
     try {
-      // 1. Récupérer tous les codes promo
+      // Nettoyer les codes expirés d'abord
+      await this.cleanupExpiredCodes();
+
+      // 1. Récupérer tous les codes promo actifs (non expirés ou permanents)
       const { data: promoCodes, error: promoError } = await supabase
         .from('promo_codes')
         .select('*')

@@ -16,9 +16,13 @@ import type {
 export class PromoCodesService {
   /**
    * Récupère tous les codes promo avec leurs récompenses
+   * Note: Nettoie automatiquement les codes expirés avant de récupérer
    */
   static async getAllPromoCodes(): Promise<PromoCodeWithRewards[]> {
     try {
+      // Nettoyer les codes expirés d'abord
+      await this.cleanupExpiredCodes();
+
       const { data: promoCodes, error: promoError } = await supabase
         .from('promo_codes')
         .select(`
@@ -237,16 +241,29 @@ export class PromoCodesService {
 
   /**
    * Supprime automatiquement les codes promo expirés
+   * Retourne le nombre de codes supprimés
    */
   static async cleanupExpiredCodes(): Promise<number> {
     try {
-      const { data, error } = await supabase.rpc('cleanup_expired_promo_codes');
+      // Supprimer directement les codes expirés via une requête SQL
+      const { data, error } = await supabase
+        .from('promo_codes')
+        .delete()
+        .not('expires_at', 'is', null)
+        .lt('expires_at', new Date().toISOString())
+        .select('id');
 
       if (error) {
-        throw new Error(`Erreur lors du nettoyage des codes expirés: ${error.message}`);
+        console.error('Erreur lors du nettoyage des codes expirés:', error);
+        return 0;
       }
 
-      return data || 0;
+      const deletedCount = data?.length || 0;
+      if (deletedCount > 0) {
+        console.log(`${deletedCount} code(s) promo expiré(s) supprimé(s)`);
+      }
+
+      return deletedCount;
     } catch (error) {
       console.error('Erreur dans cleanupExpiredCodes:', error);
       // Ne pas faire planter l'application si le nettoyage échoue

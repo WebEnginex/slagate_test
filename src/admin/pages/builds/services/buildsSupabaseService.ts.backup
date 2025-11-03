@@ -184,13 +184,6 @@ export class BuildsSupabaseService {
         // 1. Récupérer les builds actuels du chasseur
         const chasseur = await this.getChasseur(chasseurId);
         
-        // DEBUG: Afficher le chasseur récupéré
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 DEBUG chasseur récupéré:', chasseur);
-          console.log('🔍 DEBUG chasseur.element:', chasseur.element);
-          console.log('🔍 DEBUG keys:', Object.keys(chasseur));
-        }
-        
         // 2. Validation des données du chasseur
         const chasseurValidation = BuildValidator.validateChasseurData(
           chasseur.chasseur_id,
@@ -426,18 +419,46 @@ export class BuildsSupabaseService {
   }
 
   // Validation des données avant sauvegarde
-
-  /**
-   * Validation des donn�es avant sauvegarde (version simplifi�e pour compatibilit�)
-   * @deprecated Utiliser BuildValidator.validateBuildData � la place
-   */
   validateBuildData(buildData: Record<string, unknown>): string[] {
-    try {
-      const validation = BuildValidator.validateBuildData(buildData as BuildData);
-      return validation.errors;
-    } catch (error) {
-      console.error('Erreur lors de la validation:', error);
-      return ['Erreur lors de la validation des donn�es'];
+    const errors: string[] = [];
+
+    if (!buildData.artefacts) {
+      errors.push('Les artefacts sont requis');
     }
+
+    if (!buildData.noyaux) {
+      errors.push('Les noyaux sont requis');
+    }
+
+    if (!buildData.stats) {
+      errors.push('Les stats sont requises');
+    }
+
+    if (!buildData.sets_bonus) {
+      errors.push('Les sets bonus sont requis');
+    } else {
+      // Valider que les sets_bonus ont des IDs valides (pas 0)
+      const setsBonus = buildData.sets_bonus as Array<{ id: number }>;
+      if (Array.isArray(setsBonus)) {
+        const invalidSets = setsBonus.filter(set => !set.id || set.id === 0);
+        if (invalidSets.length > 0) {
+          errors.push(`${invalidSets.length} set(s) bonus ont des IDs invalides - veuillez sélectionner des sets valides`);
+        }
+      }
+    }
+
+    // Validation des artefacts
+    if (buildData.artefacts) {
+      Object.entries(buildData.artefacts).forEach(([slot, artefact]: [string, Record<string, unknown>]) => {
+        if (!artefact.id) {
+          errors.push(`Artefact ${slot}: ID manquant`);
+        }
+        if (!artefact.statPrincipale) {
+          errors.push(`Artefact ${slot}: Stat principale manquante`);
+        }
+      });
+    }
+
+    return errors;
   }
 }

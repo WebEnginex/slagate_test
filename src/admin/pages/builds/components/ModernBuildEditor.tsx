@@ -97,6 +97,8 @@ interface BuildEditorProps {
   };
   onSave: (buildName: string, buildData: BuildFormData, originalBuildName?: string) => Promise<void>;
   onDelete: (buildName: string) => Promise<void>;
+  onEditingChange?: (isEditing: boolean) => void;
+  onUnsavedChangesChange?: (hasChanges: boolean) => void;
 }
 
 // Stats principales disponibles
@@ -189,7 +191,7 @@ const STATS_PAR_ARTEFACT: Record<string, string[]> = {
   ]
 };
 
-export default function BuildEditor({ chasseurData, referenceData, onSave, onDelete }: BuildEditorProps) {
+export default function BuildEditor({ chasseurData, referenceData, onSave, onDelete, onEditingChange, onUnsavedChangesChange }: BuildEditorProps) {
   const [editingBuild, setEditingBuild] = useState<string | null>(null);
   const [originalBuildName, setOriginalBuildName] = useState<string | null>(null);
   const [formData, setFormData] = useState<BuildFormData | null>(null);
@@ -203,6 +205,37 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
   const [buildToDelete, setBuildToDelete] = useState<string | null>(null);
   const [showWarningConfirm, setShowWarningConfirm] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Notifier le parent quand l'état d'édition change
+  useEffect(() => {
+    onEditingChange?.(editingBuild !== null);
+  }, [editingBuild, onEditingChange]);
+
+  // Notifier le parent quand les modifications non sauvegardées changent
+  useEffect(() => {
+    onUnsavedChangesChange?.(hasUnsavedChanges);
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
+
+  // Détecter les modifications du formData pour marquer hasUnsavedChanges
+  const formDataRef = React.useRef<BuildFormData | null>(null);
+  useEffect(() => {
+    // Ignorer le premier rendu et les chargements de builds
+    if (formData && formDataRef.current && editingBuild) {
+      // Vérifier si les données ont réellement changé
+      if (JSON.stringify(formData) !== JSON.stringify(formDataRef.current)) {
+        setHasUnsavedChanges(true);
+      }
+    }
+    formDataRef.current = formData;
+  }, [formData, editingBuild]);
+
+  // Helper pour marquer les modifications lors de l'édition
+  const updateFormData = React.useCallback((newData: BuildFormData) => {
+    setFormData(newData);
+    if (editingBuild) {
+      setHasUnsavedChanges(true);
+    }
+  }, [editingBuild]);
 
   // Debug des données de référence
   useEffect(() => {
@@ -324,6 +357,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
     setErrorMessage(null);
     setValidationErrors([]);
     setValidationWarnings([]);
+    setHasUnsavedChanges(false);
   };
 
   // Charger un build existant pour modification
@@ -338,6 +372,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
       setErrorMessage(null);
       setValidationErrors([]);
       setValidationWarnings([]);
+      setHasUnsavedChanges(false);
     }
   };
 

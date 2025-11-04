@@ -139,6 +139,12 @@ export default function BuildsAdminPage() {
   const [validationResult, setValidationResult] = useState<BuildValidationResult | null>(null);
   const [hasLoadError, setHasLoadError] = useState(false);
   
+  // États pour la gestion de l'édition
+  const [isEditing, setIsEditing] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [pendingChasseurId, setPendingChasseurId] = useState<number | null>(null);
+  const [showChangeConfirm, setShowChangeConfirm] = useState(false);
+  
   // États pour le filtrage des chasseurs
   const [elementFilter, setElementFilter] = useState<string>("tous");
   const [showJinwooOnly, setShowJinwooOnly] = useState(false);
@@ -290,6 +296,45 @@ export default function BuildsAdminPage() {
     loadReferenceData();
     loadChasseurs();
   }, [loadReferenceData, loadChasseurs]);
+
+  /**
+   * Gère le changement de chasseur avec confirmation si modifications non sauvegardées
+   */
+  const handleChasseurChange = React.useCallback((newChasseurId: number) => {
+    // Si on est en édition avec des modifications non sauvegardées
+    if (isEditing && hasUnsavedChanges && newChasseurId !== selectedChasseurId) {
+      setPendingChasseurId(newChasseurId);
+      setShowChangeConfirm(true);
+      return;
+    }
+    
+    // Sinon, changement direct
+    setSelectedChasseurId(newChasseurId);
+    setIsEditing(false);
+    setHasUnsavedChanges(false);
+  }, [isEditing, hasUnsavedChanges, selectedChasseurId]);
+
+  /**
+   * Confirme le changement de chasseur (abandonne les modifications)
+   */
+  const confirmChasseurChange = React.useCallback(() => {
+    if (pendingChasseurId !== null) {
+      setSelectedChasseurId(pendingChasseurId);
+      setIsEditing(false);
+      setHasUnsavedChanges(false);
+      setPendingChasseurId(null);
+      setShowChangeConfirm(false);
+      showMessage('info', 'Modifications abandonnées');
+    }
+  }, [pendingChasseurId, showMessage]);
+
+  /**
+   * Annule le changement de chasseur
+   */
+  const cancelChasseurChange = React.useCallback(() => {
+    setPendingChasseurId(null);
+    setShowChangeConfirm(false);
+  }, []);
 
   // Validation des builds
   const validateBuilds = () => {
@@ -480,24 +525,29 @@ export default function BuildsAdminPage() {
         {message && (
           <Alert className={`py-3 ${
             message.type === 'error' ? 'border-destructive bg-destructive/10' : 
-            message.type === 'warning' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10' : 
-            message.type === 'info' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' :
-            'border-green-500 bg-green-50 dark:bg-green-900/10'
+            message.type === 'warning' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' : 
+            message.type === 'info' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' :
+            'border-green-500 bg-green-50 dark:bg-green-900/30'
           }`}>
             <div className="flex gap-3">
               <div className="flex-shrink-0 mt-0.5">
                 {message.type === 'error' ? (
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                 ) : message.type === 'warning' ? (
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  <AlertTriangle className="h-4 w-4 text-yellow-500 dark:text-yellow-400" />
                 ) : message.type === 'info' ? (
-                  <WifiOff className="h-4 w-4 text-blue-600" />
+                  <WifiOff className="h-4 w-4 text-blue-500 dark:text-blue-400" />
                 ) : (
-                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                 )}
               </div>
               <div className="flex-1">
-                <AlertDescription className="text-sm font-medium">
+                <AlertDescription className={`text-sm font-medium ${
+                  message.type === 'success' ? 'text-green-900 dark:text-green-100' :
+                  message.type === 'warning' ? 'text-yellow-900 dark:text-yellow-100' :
+                  message.type === 'info' ? 'text-blue-900 dark:text-blue-100' :
+                  ''
+                }`}>
                   {message.text}
                 </AlertDescription>
                 {message.details && (
@@ -630,15 +680,26 @@ export default function BuildsAdminPage() {
                 </div>
               ) : (
                 <div className="relative max-w-full">
+                  {/* Overlay si édition en cours */}
+                  {isEditing && (
+                    <div className="absolute inset-0 bg-black/20 z-10 rounded-lg flex items-center justify-center">
+                      <div className="bg-sidebar border border-sidebar-border rounded-lg p-4 shadow-lg">
+                        <p className="text-sm text-white/80">Édition en cours...</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div 
                     ref={carouselRef}
                     className="overflow-x-auto overflow-y-hidden pb-2 hide-scrollbar max-w-full"
                     style={{ 
-                      cursor: isDragging ? 'grabbing' : 'grab',
-                      WebkitOverflowScrolling: 'touch'
+                      cursor: isDragging ? 'grabbing' : (isEditing ? 'not-allowed' : 'grab'),
+                      WebkitOverflowScrolling: 'touch',
+                      opacity: isEditing ? 0.6 : 1,
+                      pointerEvents: isEditing ? 'none' : 'auto'
                     }}
                     onMouseDown={(e) => {
-                      if (!carouselRef.current) return;
+                      if (!carouselRef.current || isEditing) return;
                       e.preventDefault();
                       setIsDragging(true);
                       setStartX(e.pageX - carouselRef.current.offsetLeft);
@@ -662,7 +723,7 @@ export default function BuildsAdminPage() {
                         if (card) {
                           const chasseurId = parseInt(card.getAttribute('data-chasseur-id') || '0');
                           if (chasseurId) {
-                            setSelectedChasseurId(chasseurId);
+                            handleChasseurChange(chasseurId);
                           }
                         }
                       }
@@ -758,6 +819,8 @@ export default function BuildsAdminPage() {
               referenceData={referenceData}
               onSave={(buildName: string, buildData: Record<string, unknown>, originalBuildName?: string) => saveBuild(selectedChasseurData.chasseur_id, buildName, buildData, originalBuildName)}
               onDelete={(buildName: string) => removeBuild(selectedChasseurData.chasseur_id, buildName)}
+              onEditingChange={setIsEditing}
+              onUnsavedChangesChange={setHasUnsavedChanges}
             />
           ) : (
             <Card className="bg-sidebar border-sidebar-border">
@@ -770,6 +833,41 @@ export default function BuildsAdminPage() {
             </Card>
           )}
         </div>
+
+      {/* Modal de confirmation pour changement de chasseur */}
+      {showChangeConfirm && pendingChasseurId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card border rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-start gap-3 mb-4">
+              <AlertTriangle className="h-6 w-6 text-orange-400 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Modifications non sauvegardées</h3>
+                <p className="text-muted-foreground text-sm mb-3">
+                  Vous avez des modifications non sauvegardées pour ce chasseur. Voulez-vous vraiment changer de chasseur ?
+                </p>
+                <p className="text-xs text-orange-400">
+                  Les modifications seront perdues si vous continuez.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={cancelChasseurChange}
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmChasseurChange}
+              >
+                Abandonner les modifications
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

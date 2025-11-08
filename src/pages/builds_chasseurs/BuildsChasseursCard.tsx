@@ -320,7 +320,9 @@ export default function BuildChasseurCard({
             {/* Grille des statistiques */}
             {build && build.stats ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-                {Object.entries(build.stats).map(([label, val]) => (
+                {Object.entries(build.stats)
+                  .filter(([_, val]) => val && val.trim() !== '') // Filtrer les stats vides
+                  .map(([label, val]) => (
                   <div
                     key={label}
                     className="bg-sidebar p-2 sm:p-3 rounded border border-sidebar-border"
@@ -459,11 +461,16 @@ export default function BuildChasseurCard({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {Object.entries(build.noyaux)
+                .filter(([_, noyauxList]) => Array.isArray(noyauxList) && noyauxList.length > 0) // Filtrer les slots vides
                 .slice(0, 3) // Limiter aux 3 premiers slots
                 .map(([slot, noyauxList]) => {
                   const slotNumber = parseInt(slot, 10);
                   const activeIndex = activeNoyauIndices[slotNumber] || 0;
                   const noyau = noyauxList[activeIndex];
+                  
+                  // Protection supplémentaire : si noyau est undefined, skip
+                  if (!noyau) return null;
+                  
                   const noyauData = noyaux.find((n) => n.id === noyau.id);
 
                   // Log de développement pour déboguer les alternatives

@@ -281,8 +281,7 @@ const YoutubeAdminPage: React.FC = () => {
                         <div className="flex-1 space-y-2">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">
-                              <h3 className="font-semibold text-white flex items-center gap-2">
-                                {link.title || 'Sans titre'}
+                              <div className="flex items-center gap-2">
                                 {link.is_active ? (
                                   <Badge className="bg-green-600 hover:bg-green-700">
                                     <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -294,7 +293,7 @@ const YoutubeAdminPage: React.FC = () => {
                                     Inactive
                                   </Badge>
                                 )}
-                              </h3>
+                              </div>
                               {link.description && (
                                 <p className="text-sm text-muted-foreground mt-1">
                                   {link.description}

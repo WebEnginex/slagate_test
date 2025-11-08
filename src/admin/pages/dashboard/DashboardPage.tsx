@@ -106,6 +106,17 @@ const DashboardPage: React.FC = () => {
           buttonColor: "bg-blue-600 hover:bg-blue-700 text-white",
           hoverColor: "group-hover:text-blue-400"
         },
+        {
+          title: "Sets Bonus",
+          description: "Créer et gérer les bonus de set",
+          icon: <Database className="h-6 w-6" />,
+          to: "/admin/sets-bonus",
+          iconBg: "bg-blue-500/20",
+          iconColor: "text-blue-400",
+          borderColor: "border-blue-500/30",
+          buttonColor: "bg-blue-600 hover:bg-blue-700 text-white",
+          hoverColor: "group-hover:text-blue-400"
+        },
       ],
     },
     {

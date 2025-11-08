@@ -322,7 +322,7 @@ export default function BuildsPage() {
       if (noyauIds.size > 0) {
         const { data: noyauData } = await supabase
           .from("noyaux")
-          .select("id, nom, image, description, last_modified")
+          .select("id, nom, image, description, slot, last_modified")
           .in("id", Array.from(noyauIds));
         
         if (noyauData && noyauData.length > 0) {
@@ -493,7 +493,12 @@ export default function BuildsPage() {
     const matchSearch = chasseur.nom
       .toLowerCase()
       .includes(search.toLowerCase());
-    const matchElement = !selectedElement || entry.element === selectedElement;
+    
+    // Gestion spéciale pour Sung Jinwoo (pas d'élément)
+    const matchElement = !selectedElement || 
+      (selectedElement === "jinwoo" 
+        ? chasseur.nom.toLowerCase().includes("sung jinwoo")
+        : entry.element === selectedElement);
 
     return matchSearch && matchElement;
   });

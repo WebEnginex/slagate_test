@@ -34,6 +34,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { to: "/admin/artefacts", label: "Artefacts", icon: <Shield className="h-4 w-4 mr-2" /> },
     { to: "/admin/noyaux", label: "Noyaux", icon: <Zap className="h-4 w-4 mr-2" /> },
     { to: "/admin/armes", label: "Armes", icon: <Swords className="h-4 w-4 mr-2" /> },
+    { to: "/admin/sets-bonus", label: "Sets Bonus", icon: <Database className="h-4 w-4 mr-2" /> },
   ];
 
   const isDatabaseActive = databaseItems.some(item => location.pathname.startsWith(item.to));

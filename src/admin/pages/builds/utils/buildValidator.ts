@@ -265,15 +265,19 @@ export class BuildValidator {
       warnings.push('Toutes les statistiques sont vides');
     }
 
-    // Valider le format des valeurs numériques
+    // Valider le format des valeurs (accepte nombres et texte)
     statEntries.forEach(([statName, value]) => {
       if (value !== '' && value !== null && value !== undefined) {
-        const numValue = typeof value === 'number' ? value : parseFloat(String(value));
-        if (isNaN(numValue)) {
-          errors.push(`Statistique "${statName}" : valeur invalide "${value}"`);
-        } else if (numValue < 0) {
-          errors.push(`Statistique "${statName}" : la valeur ne peut pas être négative`);
+        const stringValue = String(value);
+        
+        // Si la valeur ressemble à un nombre, valider qu'il est positif
+        const numValue = parseFloat(stringValue);
+        if (!isNaN(numValue)) {
+          if (numValue < 0) {
+            errors.push(`Statistique "${statName}" : la valeur ne peut pas être négative`);
+          }
         }
+        // Sinon, accepter le texte tel quel (ex: "ALL IN", "MAX", etc.)
       }
     });
 

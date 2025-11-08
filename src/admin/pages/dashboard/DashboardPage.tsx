@@ -1,5 +1,5 @@
 import React from "react";
-import { Settings, Gift, Trophy, Users, Package, Zap, Database, Sparkles, Swords, Shield } from "lucide-react";
+import { Settings, Gift, Trophy, Users, Package, Zap, Database, Sparkles, Swords, Shield, Youtube } from "lucide-react";
 import { useDashboardStats } from "@/admin/hooks/useDashboardStats";
 import { 
   DashboardHeader,
@@ -124,6 +124,25 @@ const DashboardPage: React.FC = () => {
           borderColor: "border-rose-500/30",
           buttonColor: "bg-rose-600 hover:bg-rose-700 text-white",
           hoverColor: "group-hover:text-rose-400"
+        },
+      ],
+    },
+    {
+      name: "Contenu",
+      description: "Gérer le contenu du site",
+      icon: <Youtube className="h-4 w-4" />,
+      color: "from-red-500 to-red-600",
+      panels: [
+        {
+          title: "YouTube",
+          description: "Gérer les vidéos YouTube affichées",
+          icon: <Youtube className="h-6 w-6" />,
+          to: "/admin/youtube",
+          iconBg: "bg-red-500/20",
+          iconColor: "text-red-400",
+          borderColor: "border-red-500/30",
+          buttonColor: "bg-red-600 hover:bg-red-700 text-white",
+          hoverColor: "group-hover:text-red-400"
         },
       ],
     },

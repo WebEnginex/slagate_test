@@ -28,6 +28,7 @@ const ChasseursAdmin = lazy(() => import("@/admin/pages/chasseurs"));
 const ArtefactsAdmin = lazy(() => import("@/admin/pages/artefacts"));
 const NoyauxAdmin = lazy(() => import("@/admin/pages/noyaux"));
 const ArmesAdmin = lazy(() => import("@/admin/pages/armes"));
+const YoutubeAdmin = lazy(() => import("@/admin/pages/youtube/YoutubeAdminPage"));
 const ProfilAdmin = lazy(() => import("@/admin/pages/profil"));
 
 // Import des composants d'authentification admin
@@ -149,6 +150,14 @@ const App = () => (
             <AdminProtection>
               <Suspense fallback={<LoadingFallback />}>
                 <ArmesAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          <Route path="/admin/youtube" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <YoutubeAdmin />
               </Suspense>
             </AdminProtection>
           } />

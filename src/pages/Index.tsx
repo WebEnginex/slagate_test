@@ -6,6 +6,7 @@ import Layout from "@/components/Layout";
 import SEO from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import LazyImage from "@/lib/lazy";
+import { YoutubePlayer } from "@/components/YoutubePlayer";
 
 // =========================
 // Composant Memo pour la carte d'un chasseur
@@ -173,6 +174,9 @@ const Index = () => {
             ></iframe>
           </div>
         </div>
+
+        {/* Section YouTube */}
+        <YoutubePlayer />
       </div>
     </Layout>
   );

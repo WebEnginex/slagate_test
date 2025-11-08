@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Menu, User, ChevronDown, Database, Users, Zap, Swords, LayoutDashboard, Trophy, Gift, Shield } from "lucide-react";
+import { Settings, LogOut, Menu, User, ChevronDown, Database, Users, Zap, Swords, LayoutDashboard, Trophy, Gift, Shield, Youtube } from "lucide-react";
 import { useAuth } from "@/admin/auth/hooks/useAuth";
 import SideNav from "@/components/SideNav";
 
@@ -27,6 +27,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { to: "/admin", label: "Dashboard", exact: true, activeColor: "bg-solo-purple", hoverColor: "hover:bg-solo-purple/80", icon: <LayoutDashboard className="h-4 w-4 mr-1.5" /> },
     { to: "/admin/builds", label: "Builds", activeColor: "bg-indigo-600", hoverColor: "hover:bg-indigo-600/80", icon: <Settings className="h-4 w-4 mr-1.5" /> },
     { to: "/admin/tier-list", label: "Tier List", activeColor: "bg-amber-600", hoverColor: "hover:bg-amber-600/80", icon: <Trophy className="h-4 w-4 mr-1.5" /> },
+    { to: "/admin/youtube", label: "YouTube", activeColor: "bg-red-600", hoverColor: "hover:bg-red-600/80", icon: <Youtube className="h-4 w-4 mr-1.5" /> },
   ];
 
   const databaseItems = [

@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Dialog, 
   DialogContent, 
@@ -44,8 +43,6 @@ const YoutubeAdminPage: React.FC = () => {
   // Form state
   const [formData, setFormData] = useState({
     url: '',
-    title: '',
-    description: '',
     is_active: true
   });
 
@@ -73,8 +70,6 @@ const YoutubeAdminPage: React.FC = () => {
   const resetForm = () => {
     setFormData({
       url: '',
-      title: '',
-      description: '',
       is_active: true
     });
     setEditingLink(null);
@@ -95,8 +90,6 @@ const YoutubeAdminPage: React.FC = () => {
 
       const newLink: YoutubeLinkInput = {
         url: formData.url.trim(),
-        title: formData.title.trim() || undefined,
-        description: formData.description.trim() || undefined,
         is_active: formData.is_active
       };
 
@@ -138,8 +131,6 @@ const YoutubeAdminPage: React.FC = () => {
       await YoutubeService.updateLink({
         id: editingLink.id,
         url: formData.url.trim(),
-        title: formData.title.trim() || undefined,
-        description: formData.description.trim() || undefined,
         is_active: formData.is_active
       });
       
@@ -209,8 +200,6 @@ const YoutubeAdminPage: React.FC = () => {
     setEditingLink(link);
     setFormData({
       url: link.url,
-      title: link.title || '',
-      description: link.description || '',
       is_active: link.is_active
     });
     setIsCreateDialogOpen(true);
@@ -399,32 +388,6 @@ const YoutubeAdminPage: React.FC = () => {
                 <p className="text-xs text-muted-foreground">
                   Formats acceptés : URL complète YouTube ou ID de vidéo
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="title" className="text-white">
-                  Titre (optionnel)
-                </Label>
-                <Input
-                  id="title"
-                  placeholder="Mon titre personnalisé"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="bg-sidebar-accent border-sidebar-border text-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-white">
-                  Description (optionnel)
-                </Label>
-                <Textarea
-                  id="description"
-                  placeholder="Description de la vidéo..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="bg-sidebar-accent border-sidebar-border text-white min-h-[80px]"
-                />
               </div>
 
               <div className="flex items-center space-x-2">

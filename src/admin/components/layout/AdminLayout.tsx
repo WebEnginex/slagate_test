@@ -27,7 +27,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { to: "/admin", label: "Dashboard", exact: true, activeColor: "bg-solo-purple", hoverColor: "hover:bg-solo-purple/80", icon: <LayoutDashboard className="h-4 w-4 mr-1.5" /> },
     { to: "/admin/builds", label: "Builds", activeColor: "bg-indigo-600", hoverColor: "hover:bg-indigo-600/80", icon: <Settings className="h-4 w-4 mr-1.5" /> },
     { to: "/admin/tier-list", label: "Tier List", activeColor: "bg-amber-600", hoverColor: "hover:bg-amber-600/80", icon: <Trophy className="h-4 w-4 mr-1.5" /> },
-    { to: "/admin/youtube", label: "YouTube", activeColor: "bg-red-600", hoverColor: "hover:bg-red-600/80", icon: <Youtube className="h-4 w-4 mr-1.5" /> },
   ];
 
   const databaseItems = [
@@ -132,6 +131,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                         <Link to="/admin/promo-codes" className="flex items-center">
                           <Gift className="h-4 w-4 mr-1.5" />
                           Codes Promo
+                        </Link>
+                      </Button>
+
+                      {/* YouTube - placé après Codes Promo */}
+                      <Button
+                        asChild
+                        variant={location.pathname.startsWith("/admin/youtube") ? "default" : "ghost"}
+                        size="sm"
+                        className={location.pathname.startsWith("/admin/youtube") ? "bg-red-600 hover:bg-red-600/80 text-white" : "hover:bg-red-600/80 text-white/80"}
+                      >
+                        <Link to="/admin/youtube" className="flex items-center">
+                          <Youtube className="h-4 w-4 mr-1.5" />
+                          YouTube
                         </Link>
                       </Button>
                     </nav>

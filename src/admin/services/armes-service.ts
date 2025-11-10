@@ -89,22 +89,25 @@ export class ArmesService {
         throw new Error('Le nom de l\'arme est requis pour l\'upload de l\'image.');
       }
 
-      // Générer un nom de fichier unique basé sur le nom de l'arme
-      const timestamp = Date.now();
-      const cleanName = armeNom.replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
-      
+      // Générer un nom de fichier basé sur le nom de l'arme
+      // Remplacer les espaces par des underscores et supprimer les caractères spéciaux
+      const cleanName = armeNom
+        .trim()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9_]/g, '');
+
       if (cleanName.length === 0) {
         throw new Error('Le nom de l\'arme contient des caractères non valides.');
       }
-      
-      const fileName = `${cleanName}_${timestamp}.webp`;
+
+      const fileName = `${cleanName}.webp`;
 
       // Upload le fichier
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           contentType: 'image/webp',
-          upsert: false
+          upsert: true
         });
 
       if (error) {

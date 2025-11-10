@@ -24,16 +24,23 @@ type Noyau = Database["public"]["Tables"]["noyaux"]["Row"];
 type Ombre = Database["public"]["Tables"]["ombres"]["Row"];
 type SetBonus = Database["public"]["Tables"]["sets_bonus"]["Row"];
 
+type ArtefactConf = {
+  id: number;
+  statPrincipale: string;
+  statsSecondaires: string[];
+};
+
+// Extended type for boots with alternative stats
+type ArtefactConfWithAlternatives = ArtefactConf & {
+  stats?: string[]; // Array of alternative stats for boots
+};
+
 type Build = {
   id: number;
   nom: string;
   stats: Record<string, string>;
   artefacts: {
-    [slot: string]: {
-      id: number;
-      statPrincipale: string;
-      statsSecondaires: string[];
-    };
+    [slot: string]: ArtefactConf | ArtefactConf[] | ArtefactConfWithAlternatives;
   };
   noyaux: {
     [slot: number]: {
@@ -44,6 +51,32 @@ type Build = {
   };
   sets_bonus: { id: number }[];
 };
+
+// Normalisation des artefacts.bottes pour chaque build
+function normalizeBuilds(builds: Build[]): Build[] {
+  return builds.map((build) => {
+    const artefacts = { ...build.artefacts };
+    if (artefacts.bottes) {
+      if (Array.isArray(artefacts.bottes)) {
+        const arr = artefacts.bottes as ArtefactConf[];
+        if (arr.length > 0) {
+          artefacts.bottes = {
+            id: arr[0].id,
+            statPrincipale: arr[0].statPrincipale,
+            stats: arr.map(b => b.statPrincipale),
+            statsSecondaires: arr[0].statsSecondaires || [],
+          } as ArtefactConfWithAlternatives;
+        } else {
+          artefacts.bottes = undefined;
+        }
+      }
+    }
+    return {
+      ...build,
+      artefacts,
+    };
+  });
+}
 
 type Props = {
   chasseur: Chasseur;
@@ -133,6 +166,21 @@ export default function BuildChasseurCard({
   isOpen,
   onToggle,
 }: Props) {
+  // Normaliser les builds pour garantir la structure bottes
+  const normalizedBuilds = React.useMemo(() => normalizeBuilds(builds), [builds]);
+
+  // Log de debug pour vérifier la prop artefacts reçue
+  React.useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[DEBUG artefacts prop]', artefacts);
+      const bottes29 = artefacts.find(a => a.id === 29);
+      if (bottes29) {
+        console.log('[DEBUG artefact id 29]', bottes29);
+      } else {
+        console.warn('[DEBUG artefact id 29 ABSENT]');
+      }
+    }
+  }, [artefacts]);
   // =========================
   // Utilisation conforme au guide d'implémentation
   // =========================
@@ -144,10 +192,16 @@ export default function BuildChasseurCard({
   const [selectedBuildIndex, setSelectedBuildIndex] = React.useState(0);
   const [openSections, setOpenSections] = React.useState<string[]>(isOpen ? ["artefacts"] : []); // artefacts ouvert par défaut si déjà ouvert
   const [activeNoyauIndices, setActiveNoyauIndices] = React.useState<Record<number, number>>({});
+  const [activeBootIndex, setActiveBootIndex] = React.useState(0); // index actif pour les variantes de bottes
+
+  // Reset l'index de botte actif quand le build change pour éviter les erreurs d'index
+  React.useEffect(() => {
+    setActiveBootIndex(0);
+  }, [selectedBuildIndex]);
   const [isDataLoading, setIsDataLoading] = React.useState(false);
   const [renderKey, setRenderKey] = React.useState(0); // Clé pour forcer le re-rendu des images
 
-  const build = builds[selectedBuildIndex];
+  const build = normalizedBuilds[selectedBuildIndex];
 
   // Surveiller le changement d'état d'ouverture pour déclencher le chargement
   React.useEffect(() => {
@@ -258,7 +312,9 @@ export default function BuildChasseurCard({
           <div className="flex gap-2 sm:gap-3 lg:gap-4 overflow-x-auto pb-2">
             {builds.map((b, i) => {
               // Utiliser l'artefact "casque" pour l'image du build, sinon fallback sur le premier artefact
-              const casqueArtefact = b.artefacts.casque || Object.values(b.artefacts)[0];
+              const casqueArtefactData = b.artefacts.casque || Object.values(b.artefacts)[0];
+              // Gérer le cas où c'est un tableau (bottes)
+              const casqueArtefact = Array.isArray(casqueArtefactData) ? casqueArtefactData[0] : casqueArtefactData;
               const art = getById(artefacts, casqueArtefact?.id);
               
               // Si l'artefact n'est pas trouvé et qu'il n'y a aucun artefact chargé, 
@@ -360,39 +416,112 @@ export default function BuildChasseurCard({
 
             {/* Grille des artefacts */}
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4">
-              {/* Ordre fixe : casque, armure, gants, bottes, collier, bracelet, bague, boucles */}
               {['casque', 'armure', 'gants', 'bottes', 'collier', 'bracelet', 'bague', 'boucles'].map((slot) => {
-                const conf = build.artefacts[slot];
-                if (!conf) return null;
-                
-                const artefact = getById(artefacts, conf.id);
-                
-                // Si l'artefact n'est pas trouvé et qu'il n'y a aucun artefact chargé, 
-                // c'est probablement que les données sont en cours de chargement
+                const confData = build.artefacts[slot];
+                if (!confData) return null;
+                // Cas spécial bottes : une seule carte avec stats alternatives
+                if (slot === 'bottes') {
+                  // After normalization, boots should be a single object with optional stats array
+                  const bottesConf = confData as ArtefactConfWithAlternatives;
+
+                  // Build the stats array from the normalized data
+                  const statsArray: string[] = bottesConf.stats && bottesConf.stats.length > 0
+                    ? bottesConf.stats
+                    : [bottesConf.statPrincipale];
+
+                  // Index actif pour l'alternance
+                  const statIndex = activeBootIndex % statsArray.length;
+
+                  // Mapping artefact
+                  const artefact = artefacts.find(a => a.id === bottesConf.id);
+                  const isLoading = !artefact && (artefacts.length === 0 || isDataLoading);
+                  const notFound = !artefact && artefacts.length > 0;
+
+                  // Debug log détaillé
+                  if (process.env.NODE_ENV !== 'production') {
+                    console.log('[Bottes] bottesConf =', bottesConf);
+                    console.log('[Bottes] bottesConf.id =', bottesConf.id);
+                    console.log('[Bottes] statsArray =', statsArray);
+                    console.log('[Bottes] artefacts ids =', artefacts.map(a => a.id));
+                    if (artefact) {
+                      console.log('[Bottes] artefact trouvé:', artefact);
+                    } else {
+                      console.warn('[Bottes] Artefact bottes introuvable pour id', bottesConf.id);
+                    }
+                  }
+
+                  let errorMsg = '';
+                  if (bottesConf.id === undefined || bottesConf.id === null) {
+                    errorMsg = 'ID des bottes non défini dans le build. Vérifiez la structure de build.artefacts.bottes.';
+                  } else if (notFound) {
+                    errorMsg = `ID: ${bottesConf.id} (introuvable dans artefacts)`;
+                  }
+
+                  return (
+                    <div key="bottes" className="bg-sidebar p-2 sm:p-3 rounded-lg border border-sidebar-border">
+                      <div className="flex flex-col items-center">
+                        <p className="mb-1 text-[10px] sm:text-2xs font-semibold text-solo-light-purple">Bottes</p>
+                        {isLoading ? (
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-gray-800 rounded animate-pulse flex items-center justify-center">
+                            <div className="w-4 h-4 border-2 border-solo-purple border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        ) : notFound || bottesConf.id === undefined ? (
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center bg-gray-900 rounded">
+                            <span className="text-xs text-red-400">{errorMsg || 'Bottes inconnues'}</span>
+                          </div>
+                        ) : (
+                          <LazyImage
+                            key={`artefact-bottes-${bottesConf.id}-${renderKey}`}
+                            src={artefact?.image || ""}
+                            className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto object-contain"
+                            alt={artefact?.nom || "Artefact"}
+                            fallbackClassName="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto bg-transparent"
+                            showSpinner={true}
+                          />
+                        )}
+                        <p className="mt-1 text-[10px] sm:text-2xs font-medium text-center text-white truncate w-full">
+                          {isLoading
+                            ? 'Chargement...'
+                            : notFound || bottesConf.id === undefined
+                              ? errorMsg
+                              : artefact?.nom}
+                        </p>
+                        <div className="w-full mt-1">
+                          <div className="text-[10px] sm:text-2xs bg-solo-purple/20 text-white px-1 py-0.5 rounded font-medium text-center truncate">
+                            {statsArray[statIndex] || '-'}
+                          </div>
+                        </div>
+                        {/* Le bouton n'est affiché que s'il y a plusieurs stats alternatives */}
+                        {statsArray.length > 1 ? (
+                          <button
+                            onClick={() => setActiveBootIndex((prev) => (prev + 1) % statsArray.length)}
+                            className="mt-2 bg-solo-purple/90 hover:bg-solo-purple text-white text-[10px] sm:text-2xs px-2 py-0.5 rounded text-center mx-auto block"
+                          >
+                            {statIndex === 0 ? "Alternative" : "Meilleur"}
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                }
+                // Autres artefacts (hors bottes)
+                const artefact = artefacts.find(a => a.id === (Array.isArray(confData) ? confData[0].id : confData.id));
                 const isLoading = !artefact && (artefacts.length === 0 || isDataLoading);
-                
-                // Affichage du nom du slot avec "Boucles d'oreilles" pour "boucles"
-                const displaySlotName = slot === 'boucles' 
-                  ? "Boucles d'oreilles" 
-                  : slot.charAt(0).toUpperCase() + slot.slice(1);
-                
+                const notFound = !artefact && artefacts.length > 0;
+                const conf = Array.isArray(confData) ? confData[0] : confData;
                 return (
-                  <div
-                    key={slot}
-                    className="bg-sidebar p-2 sm:p-3 rounded-lg border border-sidebar-border"
-                  >
+                  <div key={slot} className="bg-sidebar p-2 sm:p-3 rounded-lg border border-sidebar-border">
                     <div className="flex flex-col items-center">
-                      <p className="mb-1 text-[10px] sm:text-2xs font-semibold text-solo-light-purple">
-                        {displaySlotName}
-                      </p>
-                      
+                      <p className="mb-1 text-[10px] sm:text-2xs font-semibold text-solo-light-purple">{slot.charAt(0).toUpperCase() + slot.slice(1)}</p>
                       {isLoading ? (
-                        // État de chargement
                         <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-gray-800 rounded animate-pulse flex items-center justify-center">
                           <div className="w-4 h-4 border-2 border-solo-purple border-t-transparent rounded-full animate-spin"></div>
                         </div>
+                      ) : notFound ? (
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center bg-gray-900 rounded">
+                          <span className="text-xs text-gray-400">Artefact inconnu</span>
+                        </div>
                       ) : (
-                        // Image de l'artefact
                         <LazyImage
                           key={`artefact-${slot}-${conf.id}-${renderKey}`}
                           src={artefact?.image || ""}
@@ -402,43 +531,18 @@ export default function BuildChasseurCard({
                           showSpinner={true}
                         />
                       )}
-                      
                       <p className="mt-1 text-[10px] sm:text-2xs font-medium text-center text-white truncate w-full">
-                        {isLoading ? "Chargement..." : (artefact?.nom || `ID: ${conf.id} (introuvable)`)}
+                        {isLoading
+                          ? "Chargement..."
+                          : notFound
+                            ? `ID: ${conf.id} (introuvable)`
+                            : artefact?.nom}
                       </p>
                       <div className="w-full mt-1">
                         <div className="text-[10px] sm:text-2xs bg-solo-purple/20 text-white px-1 py-0.5 rounded font-medium text-center truncate">
                           {conf.statPrincipale}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </SectionCollapsible>
-
-          {/* Sets Bonus */}
-          <SectionCollapsible
-            label="Bonus de Sets"
-            icon={<Layers className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-solo-purple" />}
-            isOpen={isSectionOpen("sets")}
-            onToggle={() => toggleSection("sets")}
-          >
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 text-sm">
-              {build.sets_bonus.map((sb, i) => {
-                const bonus = getById(setsBonus, sb.id);
-                if (!bonus) return null;
-                return (
-                  <div
-                    key={i}
-                    className="bg-sidebar p-2 sm:p-3 rounded-lg border border-sidebar-border"
-                  >
-                    <p className="font-semibold text-xs sm:text-sm text-solo-purple">
-                      {bonus.nom}
-                    </p>
-                    <div className="text-2xs sm:text-xs text-gray-300 mt-1 sm:mt-2">
-                      {formatTextWithBrackets(bonus.description || "")}
                     </div>
                   </div>
                 );

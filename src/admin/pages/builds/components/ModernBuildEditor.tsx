@@ -64,12 +64,12 @@ interface ArtefactSlots {
   casque?: { id: number; statPrincipale: string };
   armure?: { id: number; statPrincipale: string };
   gants?: { id: number; statPrincipale: string };
-  bottes?: { id: number; statPrincipale: string };
+  bottes?: Array<{ id: number; statPrincipale: string }>; // Modifié pour supporter les variantes
   collier?: { id: number; statPrincipale: string };
   bracelet?: { id: number; statPrincipale: string };
   bague?: { id: number; statPrincipale: string };
   boucles?: { id: number; statPrincipale: string };
-  [key: string]: { id: number; statPrincipale: string } | undefined;
+  [key: string]: { id: number; statPrincipale: string } | Array<{ id: number; statPrincipale: string }> | undefined;
 }
 
 // Types pour les builds
@@ -366,7 +366,14 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
     const builds = buildsData?.builds;
     const build = builds?.[buildName];
     if (build) {
-      setFormData({ ...build });
+      // Convertir le format des bottes si nécessaire (ancien format: objet -> nouveau format: tableau)
+      const loadedBuild = { ...build };
+      if (loadedBuild.artefacts.bottes && !Array.isArray(loadedBuild.artefacts.bottes)) {
+        // Ancien format détecté, convertir en tableau
+        loadedBuild.artefacts.bottes = [loadedBuild.artefacts.bottes as { id: number; statPrincipale: string }];
+      }
+      
+      setFormData(loadedBuild);
       setEditingBuild(buildName);
       setOriginalBuildName(buildName); // Sauvegarder l'ancien nom pour le renommage
       setErrorMessage(null);
@@ -957,9 +964,149 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
               <TabsContent value="artefacts" className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                   {SLOTS_ARTEFACTS.map(slot => {
-                    const artefactsRecord = formData.artefacts as Record<string, { id: number; statPrincipale: string } | undefined>;
-                    const selectedArtefact = artefactsRecord[slot]?.id 
-                      ? referenceData?.artefacts.find(a => a.id === artefactsRecord[slot]!.id)
+                    const artefactsRecord = formData.artefacts as Record<string, { id: number; statPrincipale: string } | Array<{ id: number; statPrincipale: string }> | undefined>;
+                    
+                    // Gestion spéciale pour les bottes (array de variantes)
+                    if (slot === 'bottes') {
+                      const bottesVariants = (artefactsRecord[slot] as Array<{ id: number; statPrincipale: string }>) || [];
+                      const selectedBootId = bottesVariants.length > 0 ? bottesVariants[0].id : 0;
+                      const selectedArtefact = selectedBootId 
+                        ? referenceData?.artefacts.find(a => a.id === selectedBootId)
+                        : undefined;
+                      
+                      return (
+                        <Card key={slot} className="p-3 hover:border-primary/50 transition-colors">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                              <h4 className="text-sm font-medium capitalize">Bottes</h4>
+                            </div>
+                            
+                            {/* Sélection de la botte (une seule fois) */}
+                            <Select
+                              value={selectedBootId?.toString() || ''}
+                              onValueChange={(value) => {
+                                const artefactId = parseInt(value);
+                                // Mettre à jour l'id pour toutes les variantes
+                                const newBottes = bottesVariants.length > 0 
+                                  ? bottesVariants.map(v => ({ ...v, id: artefactId }))
+                                  : [{ id: artefactId, statPrincipale: "" }];
+                                setFormData({
+                                  ...formData,
+                                  artefacts: {
+                                    ...formData.artefacts,
+                                    bottes: newBottes
+                                  }
+                                });
+                              }}
+                            >
+                              <SelectTriggerWithImage
+                                selectedItem={selectedArtefact}
+                                placeholder="Choisir bottes"
+                              />
+                              <SelectContent>
+                                {getArtefactsByCategorie('bottes').map(artefact => (
+                                  <SelectItem key={artefact.id} value={artefact.id.toString()}>
+                                    <ItemWithImage
+                                      image={artefact.image}
+                                      nom={artefact.nom}
+                                      id={artefact.id}
+                                    />
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            
+                            {/* Variantes de stats */}
+                            {selectedBootId > 0 && (
+                              <div className="space-y-2 mt-3">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-xs text-muted-foreground">Variantes de stats</Label>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const newBottes = [...bottesVariants, { id: selectedBootId, statPrincipale: "" }];
+                                      setFormData({
+                                        ...formData,
+                                        artefacts: {
+                                          ...formData.artefacts,
+                                          bottes: newBottes
+                                        }
+                                      });
+                                    }}
+                                    className="h-7 w-7 p-0"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                                
+                                {bottesVariants.map((botte, index) => (
+                                  <div key={index} className="flex gap-2">
+                                    <Select
+                                      value={botte.statPrincipale || ''}
+                                      onValueChange={(value) => {
+                                        const newBottes = [...bottesVariants];
+                                        newBottes[index] = {
+                                          ...botte,
+                                          statPrincipale: value
+                                        };
+                                        setFormData({
+                                          ...formData,
+                                          artefacts: {
+                                            ...formData.artefacts,
+                                            bottes: newBottes
+                                          }
+                                        });
+                                      }}
+                                    >
+                                      <SelectTrigger className="flex-1 h-9">
+                                        <SelectValue placeholder="Stat principale" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {(STATS_PAR_ARTEFACT['bottes'] || []).map(stat => (
+                                          <SelectItem key={stat} value={stat}>{stat}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => {
+                                        const newBottes = bottesVariants.filter((_, i) => i !== index);
+                                        setFormData({
+                                          ...formData,
+                                          artefacts: {
+                                            ...formData.artefacts,
+                                            bottes: newBottes.length > 0 ? newBottes : []
+                                          }
+                                        });
+                                      }}
+                                      className="h-9 w-9 p-0"
+                                      disabled={bottesVariants.length === 1}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {bottesVariants.length === 0 && (
+                              <div className="text-center py-6 text-muted-foreground">
+                                <Shield className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                <p className="text-xs">Aucune botte sélectionnée</p>
+                              </div>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    }
+                    
+                    // Gestion normale pour les autres artefacts
+                    const selectedArtefact = (artefactsRecord[slot] as { id: number; statPrincipale: string } | undefined)?.id 
+                      ? referenceData?.artefacts.find(a => a.id === (artefactsRecord[slot] as { id: number; statPrincipale: string })!.id)
                       : undefined;
                     
                     return (
@@ -972,7 +1119,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                         
                         <div className="space-y-2">
                           <Select
-                            value={artefactsRecord[slot]?.id?.toString() || ''}
+                            value={(artefactsRecord[slot] as { id: number; statPrincipale: string } | undefined)?.id?.toString() || ''}
                             onValueChange={(value) => {
                               const artefactId = parseInt(value);
                               setFormData({
@@ -980,9 +1127,9 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                                 artefacts: {
                                   ...formData.artefacts,
                                   [slot]: {
-                                    ...artefactsRecord[slot],
+                                    ...(artefactsRecord[slot] as { id: number; statPrincipale: string } | undefined),
                                     id: artefactId,
-                                    statPrincipale: artefactsRecord[slot]?.statPrincipale || ""
+                                    statPrincipale: (artefactsRecord[slot] as { id: number; statPrincipale: string } | undefined)?.statPrincipale || ""
                                   }
                                 }
                               });
@@ -1006,14 +1153,14 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                           </Select>
                           
                           <Select
-                            value={artefactsRecord[slot]?.statPrincipale || ''}
+                            value={(artefactsRecord[slot] as { id: number; statPrincipale: string } | undefined)?.statPrincipale || ''}
                             onValueChange={(value) => setFormData({
                               ...formData,
                               artefacts: {
                                 ...formData.artefacts,
                                 [slot]: {
-                                  ...artefactsRecord[slot],
-                                  id: artefactsRecord[slot]?.id || 0,
+                                  ...(artefactsRecord[slot] as { id: number; statPrincipale: string } | undefined),
+                                  id: (artefactsRecord[slot] as { id: number; statPrincipale: string } | undefined)?.id || 0,
                                   statPrincipale: value
                                 }
                               }

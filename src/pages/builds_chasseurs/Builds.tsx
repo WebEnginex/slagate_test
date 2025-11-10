@@ -38,7 +38,7 @@ interface BuildSetBonus {
 }
 
 interface BuildFromSupabase {
-  artefacts: Record<string, BuildArtefact>;
+  artefacts: Record<string, BuildArtefact | BuildArtefact[]>; // Permet les tableaux pour les bottes avec stats alternatives
   noyaux: Record<string, BuildNoyau[] | BuildNoyau>;
   sets_bonus: BuildSetBonus[];
   ombre?: number;
@@ -59,7 +59,11 @@ interface LegacyBuild {
       id: number;
       statPrincipale: string;
       statsSecondaires: string[];
-    };
+    } | Array<{
+      id: number;
+      statPrincipale: string;
+      statsSecondaires: string[];
+    }>;
   };
   noyaux: {
     [slot: number]: {
@@ -74,13 +78,35 @@ interface LegacyBuild {
 // Fonction pour transformer les données Supabase vers le format legacy
 function transformSupabaseBuildToLegacy(supabaseBuild: BuildFromSupabase, buildId: number, buildName: string): LegacyBuild {
   // Transformer les artefacts en préservant les vraies données
-  const transformedArtefacts: { [slot: string]: { id: number; statPrincipale: string; statsSecondaires: string[]; } } = {};
-  Object.entries(supabaseBuild.artefacts || {}).forEach(([slot, art]) => {
-    transformedArtefacts[slot] = {
-      id: art.id,
-      statPrincipale: art.statPrincipale || "-", // Préserver la vraie statPrincipale
-      statsSecondaires: art.statsSecondaires || ["-"], // Préserver les vraies statsSecondaires
-    };
+  const transformedArtefacts: { 
+    [slot: string]: { id: number; statPrincipale: string; statsSecondaires: string[]; } | 
+    Array<{ id: number; statPrincipale: string; statsSecondaires: string[]; }>
+  } = {};
+  
+  Object.entries(supabaseBuild.artefacts || {}).forEach(([slot, artData]) => {
+    // Gérer les bottes qui peuvent être un tableau (variantes)
+    if (slot === 'bottes' && Array.isArray(artData)) {
+      transformedArtefacts[slot] = artData.map(art => ({
+        id: art.id,
+        statPrincipale: art.statPrincipale || "-",
+        statsSecondaires: art.statsSecondaires || ["-"],
+      }));
+    } else if (Array.isArray(artData) && artData.length > 0) {
+      // Si c'est un tableau mais pas pour les bottes, prendre le premier élément
+      const art = artData[0];
+      transformedArtefacts[slot] = {
+        id: art.id,
+        statPrincipale: art.statPrincipale || "-",
+        statsSecondaires: art.statsSecondaires || ["-"],
+      };
+    } else if (!Array.isArray(artData)) {
+      // Format objet simple
+      transformedArtefacts[slot] = {
+        id: artData.id,
+        statPrincipale: artData.statPrincipale || "-",
+        statsSecondaires: artData.statsSecondaires || ["-"],
+      };
+    }
   });
 
   // Transformer les noyaux en préservant les vraies données
@@ -130,29 +156,6 @@ export default function BuildsPage() {
     created_at?: string;
   };
   type BuildsData = Database["public"]["Tables"]["builds"]["Row"];
-
-  // Type pour un build individuel extrait du JSON
-  type Build = {
-    id: number;
-    nom: string;
-    stats: Record<string, string>;
-    artefacts: {
-      [slot: string]: {
-        id: number;
-        statPrincipale: string;
-        statsSecondaires: string[];
-      };
-    };
-    noyaux: {
-      [slot: string]: {
-        id: number;
-        statPrincipale: string;
-        statSecondaire?: string;
-      }[];
-    };
-    sets_bonus: { id: number }[];
-    ombre?: number;
-  };
 
   // États pour les données de base
   const [chasseurs, setChasseurs] = useState<Chasseur[]>([]);
@@ -261,8 +264,15 @@ export default function BuildsPage() {
       
       chasseurBuilds.forEach((build: BuildFromSupabase) => {
         // Collecter les IDs des artefacts
-        Object.values(build.artefacts || {}).forEach((art: BuildArtefact) => {
-          if (art && art.id) artefactIds.add(art.id);
+        Object.values(build.artefacts || {}).forEach((art: BuildArtefact | BuildArtefact[]) => {
+          // Gérer le cas où art est un tableau (bottes avec stats alternatives)
+          if (Array.isArray(art)) {
+            art.forEach(a => {
+              if (a && a.id) artefactIds.add(a.id);
+            });
+          } else if (art && art.id) {
+            artefactIds.add(art.id);
+          }
         });
         
         // Collecter les IDs des noyaux

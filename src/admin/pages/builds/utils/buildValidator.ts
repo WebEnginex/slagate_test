@@ -128,7 +128,11 @@ export class BuildValidator {
 
     // Vérifier les slots manquants
     slots.forEach(slot => {
-      if (!artefacts[slot]) {
+      const slotData = artefacts[slot];
+      // Un slot est manquant si :
+      // - Il n'existe pas du tout
+      // - C'est un tableau vide (cas des bottes)
+      if (!slotData || (Array.isArray(slotData) && slotData.length === 0)) {
         missingSlots.push(slot);
       }
     });
@@ -141,16 +145,49 @@ export class BuildValidator {
     }
 
     // Valider chaque artefact
-    Object.entries(artefacts).forEach(([slot, artefact]) => {
+    Object.entries(artefacts).forEach(([slot, artefactData]) => {
       if (!slots.includes(slot)) {
         errors.push(`Slot d'artefact invalide : "${slot}"`);
         return;
       }
 
-      if (!artefact || typeof artefact !== 'object') {
+      if (!artefactData || typeof artefactData !== 'object') {
         errors.push(`Artefact ${slot} : données invalides`);
         return;
       }
+
+      // Gestion spéciale pour les bottes (peut être un tableau de variantes)
+      if (slot === 'bottes' && Array.isArray(artefactData)) {
+        // Si le tableau est vide, c'est un slot manquant
+        if (artefactData.length === 0) {
+          return; // Déjà géré par missingSlots
+        }
+
+        // Valider chaque variante de bottes
+        artefactData.forEach((botte, index) => {
+          // Vérifier l'ID
+          if (!botte.id || botte.id === 0) {
+            errors.push(`Artefact ${slot} : ID manquant ou invalide`);
+            return;
+          } else if (referenceData) {
+            const exists = referenceData.artefacts.some(a => a.id === botte.id);
+            if (!exists) {
+              errors.push(`Artefact ${slot} (variante ${index + 1}) : ID ${botte.id} introuvable dans la base de données`);
+            }
+          }
+
+          // Vérifier la stat principale
+          if (!botte.statPrincipale || botte.statPrincipale.trim() === '') {
+            if (index === 0 || !slotsWithoutStats.includes(slot)) {
+              slotsWithoutStats.push(slot);
+            }
+          }
+        });
+        return;
+      }
+
+      // Validation normale pour les autres artefacts (objet simple)
+      const artefact = artefactData as { id: number; statPrincipale: string };
 
       // Vérifier l'ID
       if (!artefact.id || artefact.id === 0) {

@@ -204,7 +204,7 @@ const SetsBonusAdminPage: React.FC = () => {
           </div>
           <Button
             onClick={openCreateDialog}
-            className="bg-violet-600 hover:bg-violet-700 text-white"
+            className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
             Ajouter un set bonus

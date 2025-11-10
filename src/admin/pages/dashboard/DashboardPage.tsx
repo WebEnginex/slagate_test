@@ -1,5 +1,5 @@
 import React from "react";
-import { Settings, Gift, Trophy, Users, Package, Zap, Database, Sparkles, Swords, Shield, Youtube } from "lucide-react";
+import { Settings, Gift, Trophy, Users, Package, Zap, Database, Sparkles, Swords, Shield, Youtube, Ghost } from "lucide-react";
 import { useDashboardStats } from "@/admin/hooks/useDashboardStats";
 import { 
   DashboardHeader,
@@ -100,6 +100,17 @@ const DashboardPage: React.FC = () => {
           description: "Créer et gérer les armes de Sung Jinwoo",
           icon: <Swords className="h-6 w-6" />,
           to: "/admin/armes",
+          iconBg: "bg-blue-500/20",
+          iconColor: "text-blue-400",
+          borderColor: "border-blue-500/30",
+          buttonColor: "bg-blue-600 hover:bg-blue-700 text-white",
+          hoverColor: "group-hover:text-blue-400"
+        },
+        {
+          title: "Ombres",
+          description: "Créer et gérer les ombres de l'armée",
+          icon: <Ghost className="h-6 w-6" />,
+          to: "/admin/ombres",
           iconBg: "bg-blue-500/20",
           iconColor: "text-blue-400",
           borderColor: "border-blue-500/30",

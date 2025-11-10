@@ -28,6 +28,7 @@ const ChasseursAdmin = lazy(() => import("@/admin/pages/chasseurs"));
 const ArtefactsAdmin = lazy(() => import("@/admin/pages/artefacts"));
 const NoyauxAdmin = lazy(() => import("@/admin/pages/noyaux"));
 const ArmesAdmin = lazy(() => import("@/admin/pages/armes"));
+const OmbresAdmin = lazy(() => import("@/admin/pages/ombres"));
 const YoutubeAdmin = lazy(() => import("@/admin/pages/youtube/YoutubeAdminPage"));
 const SetsBonusAdmin = lazy(() => import("@/admin/pages/sets-bonus"));
 const ProfilAdmin = lazy(() => import("@/admin/pages/profil"));
@@ -151,6 +152,14 @@ const App = () => (
             <AdminProtection>
               <Suspense fallback={<LoadingFallback />}>
                 <ArmesAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          <Route path="/admin/ombres" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <OmbresAdmin />
               </Suspense>
             </AdminProtection>
           } />

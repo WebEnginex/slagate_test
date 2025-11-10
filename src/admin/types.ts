@@ -209,3 +209,29 @@ export interface UpdateArmeData {
   nom?: string;
   element?: ElementArme | null;
 }
+
+// ========================================
+// Types pour la gestion des ombres
+// ========================================
+
+// Interface complète d'une ombre
+export interface Ombre {
+  id: number;
+  nom: string;
+  image: string | null;
+  description: string | null;
+  created_at: string | null;
+  last_modified: string | null;
+}
+
+// Données pour créer une ombre
+export interface CreateOmbreData {
+  nom: string;
+  description?: string | null;
+}
+
+// Données pour mettre à jour une ombre (tous les champs optionnels)
+export interface UpdateOmbreData {
+  nom?: string;
+  description?: string | null;
+}

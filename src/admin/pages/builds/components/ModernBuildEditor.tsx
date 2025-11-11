@@ -13,6 +13,7 @@ import {
   ValidationError,
   formatErrorMessage
 } from '../../../services/errors';
+import { BuildCopySelector } from './BuildCopySelector';
 
 // Composant pour afficher un item avec image et nom
 const ItemWithImage = ({ image, nom, id }: { image?: string; nom: string; id: number }) => (
@@ -469,7 +470,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
       const confirm = window.confirm('Vous avez des modifications non sauvegardées. Voulez-vous vraiment annuler ?');
       if (!confirm) return;
     }
-    
+
     setEditingBuild(null);
     setOriginalBuildName(null);
     setFormData(null);
@@ -478,6 +479,30 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
     setValidationErrors([]);
     setValidationWarnings([]);
     setHasUnsavedChanges(false);
+  };
+
+  /**
+   * Gérer la copie d'un build depuis un autre chasseur
+   */
+  const handleBuildCopy = (buildData: Record<string, unknown>, buildName: string) => {
+    if (!editingBuild) return;
+
+    // Pré-remplir le formulaire avec les données du build copié
+    setFormData({
+      ...formData,
+      stats: (buildData.stats as Record<string, string>) || {},
+      artefacts: (buildData.artefacts as ArtefactSlots) || {},
+      noyaux: (buildData.noyaux as Record<string, Array<{ id: number; statPrincipale: string }>>) || {},
+      sets_bonus: (buildData.sets_bonus as Array<{ id: number }>) || [],
+    } as BuildFormData);
+
+    // Marquer comme modifié
+    setHasUnsavedChanges(true);
+
+    // Afficher un message de succès
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ Build "${buildName}" copié avec succès`);
+    }
   };
 
   /**
@@ -605,16 +630,30 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
       {editingBuild && formData && (
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Édition: {editingBuild}</CardTitle>
-              <div className="flex gap-2">
-                <Button onClick={saveBuild} disabled={!editingBuild || saving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {saving ? 'Sauvegarde...' : 'Sauvegarder'}
-                </Button>
-                <Button variant="outline" onClick={cancelEdit}>
-                  Annuler
-                </Button>
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between items-center">
+                <CardTitle>Édition: {editingBuild}</CardTitle>
+                <div className="flex gap-2">
+                  <Button onClick={saveBuild} disabled={!editingBuild || saving}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+                  </Button>
+                  <Button variant="outline" onClick={cancelEdit}>
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+
+              {/* Bouton de copie de build */}
+              <div className="flex items-center gap-2">
+                <BuildCopySelector
+                  currentChasseurId={chasseurData.chasseur_id}
+                  onBuildSelected={handleBuildCopy}
+                  disabled={saving}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Copiez un build existant pour pré-remplir le formulaire
+                </span>
               </div>
             </div>
           </CardHeader>

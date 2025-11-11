@@ -1,5 +1,5 @@
 
-3️⃣ Ajouter une tier list globale
+✅ Ajouter une tier list globale
 
 
 

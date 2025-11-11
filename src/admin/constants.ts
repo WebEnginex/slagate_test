@@ -228,6 +228,7 @@ export const STATS_OPTIONS = [
   "Défense supplémentaire",
   "PM",
   "Attaque supplémentaire",
+  "Précision",
   "Taux de coup critique",
   "Dégâts de coup critique",
   "Hausse des dégâts",

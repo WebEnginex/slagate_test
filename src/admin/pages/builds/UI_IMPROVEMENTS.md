@@ -23,12 +23,12 @@ L'interface d'édition des builds a été complètement redesignée pour offrir 
 ### 2. Onglet Statistiques 📊
 
 **Design :**
-- **4 groupes thématiques avec gradients** :
+- **5 groupes thématiques avec gradients** :
   - 🌟 **Attributs de Base** (ambre) : Force, Perception, Intelligence, Agilité, Vitalité
-  - 🗡️ **Offensif** (rouge/orange) : ATQ, ATQ%, Taux Crit, DGT Crit
-  - 🛡️ **Défensif** (bleu/cyan) : DEF, DEF%, Ténacité, Résistance
-  - ❤️ **Vitalité** (vert/émeraude) : PV, PV%
-  - ⚡ **Spécial** (violet/rose) : Autres statistiques
+  - 🗡️ **Offensif** (rouge/orange) : Taux Crit, DGT Crit, Hausse DGT, Pénétration DEF, ATQ supp., Précision
+  - 🛡️ **Défensif** (bleu/cyan) : DEF supp., Réduction DGT
+  - ❤️ **Vitalité & Soins** (vert/émeraude) : PV supp., Hausse soins donnés, Hausse soins reçus
+  - ⚡ **Gestion des PM** (violet/rose) : PM, Hausse récup. PM, Baisse coût PM
 
 **Améliorations :**
 - ✅ Groupement logique par catégorie

@@ -44,7 +44,6 @@ export const buildsChasseurs: ChasseurBuild[] = [
           "Défense supplémentaire": "-",
           "PM ": "-",
           "Attaque supplémentaire": "Le plus possible",
-          "Précision": "-",
           "Taux de coup critique ": "50%",
           "Dégâts de coup critique ": "200% - 210%",
           "Hausse des dégâts ": "30% +",

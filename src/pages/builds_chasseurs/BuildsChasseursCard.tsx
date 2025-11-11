@@ -371,13 +371,13 @@ export default function BuildChasseurCard({
                 key: 'base',
                 label: 'Attributs de Base',
                 icon: <TrendingUp className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-amber-400" />,
-                stats: ['Force', 'Précision', 'Intélligence', 'Agilité', 'Vitalité']
+                stats: ['Force', 'Perception', 'Intélligence', 'Agilité', 'Vitalité']
               },
               {
                 key: 'offensive',
                 label: 'Statistiques Offensives',
                 icon: <Sword className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-red-400" />,
-                stats: ['Taux de coup critique', 'Dégâts de coup critique', 'Hausse des dégâts', 'Pénétration de défense', 'Attaque supplémentaire', 'Précision']
+                stats: ['Taux de coup critique', 'Dégâts de coup critique', 'Hausse des dégâts', 'Pénétration de défense', 'Attaque supplémentaire']
               },
               {
                 key: 'defensive',

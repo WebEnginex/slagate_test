@@ -24,7 +24,8 @@ L'interface d'édition des builds a été complètement redesignée pour offrir 
 
 **Design :**
 - **4 groupes thématiques avec gradients** :
-  - 🗡️ **Offensif** (rouge/orange) : ATQ, ATQ%, Taux Crit, DGT Crit, Précision
+  - 🌟 **Attributs de Base** (ambre) : Force, Perception, Intelligence, Agilité, Vitalité
+  - 🗡️ **Offensif** (rouge/orange) : ATQ, ATQ%, Taux Crit, DGT Crit
   - 🛡️ **Défensif** (bleu/cyan) : DEF, DEF%, Ténacité, Résistance
   - ❤️ **Vitalité** (vert/émeraude) : PV, PV%
   - ⚡ **Spécial** (violet/rose) : Autres statistiques

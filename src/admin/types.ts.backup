@@ -110,15 +110,14 @@ export type Element = typeof ELEMENTS[number];
 // Stats possibles
 export const STATS_OPTIONS = [
   "Force",
-  "Vitalité", 
+  "Vitalité",
   "Agilité",
   "Intelligence",
   "Perception",
   "PV supplémentaire",
-  "Défense supplémentaire", 
+  "Défense supplémentaire",
   "PM",
   "Attaque supplémentaire",
-  "Précision",
   "Taux de coup critique",
   "Dégâts de coup critique",
   "Hausse des dégâts",

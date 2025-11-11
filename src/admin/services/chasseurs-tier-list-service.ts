@@ -192,7 +192,7 @@ export class ChasseursTierListService {
   }
 
   /**
-   * Réorganise les positions des chasseurs dans un tier spécifique
+   * Réorganise les positions des chasseurs dans un tier spécifique dans Supabase
    */
   static async reorderChasseurs(
     category: ChasseurCategory,
@@ -200,68 +200,72 @@ export class ChasseursTierListService {
     chasseurIds: number[]
   ): Promise<void> {
     try {
-      console.info(`Réorganisation des chasseurs dans ${category}/${tier}`);
-      
-      // Fallback temporaire avec localStorage
-      const key = `tier_list_chasseurs_${category}`;
-      const existingData: TierListChasseurEntry[] = JSON.parse(localStorage.getItem(key) || '[]');
-      
-      // Supprimer toutes les entrées existantes pour ce tier
-      const filteredData = existingData.filter((entry: TierListChasseurEntry) => 
-        !(entry.category === category && entry.tier === tier)
-      );
-      
-      // Ajouter les nouvelles entrées avec les positions mises à jour
-      chasseurIds.forEach((chasseurId, index) => {
-        filteredData.push({
-          chasseur_id: chasseurId,
-          category,
-          tier,
-          position: index
-        });
-      });
-      
-      localStorage.setItem(key, JSON.stringify(filteredData));
-      
-      console.info('Chasseurs réorganisés localement (temporaire)');
+      console.info(`[reorderChasseurs] Réorganisation des chasseurs dans ${category}/${tier}`);
+
+      // 1. Supprimer toutes les entrées existantes pour ce tier
+      const { error: deleteError } = await supabase
+        .from('tier_list_chasseurs')
+        .delete()
+        .eq('category', category)
+        .eq('tier', tier);
+
+      if (deleteError) {
+        console.error('[reorderChasseurs] Erreur lors de la suppression:', deleteError);
+        throw deleteError;
+      }
+
+      // 2. Insérer les nouvelles entrées avec les positions mises à jour
+      const newEntries = chasseurIds.map((chasseurId, index) => ({
+        chasseur_id: chasseurId,
+        category,
+        tier,
+        position: index
+      }));
+
+      if (newEntries.length > 0) {
+        const { error: insertError } = await supabase
+          .from('tier_list_chasseurs')
+          .insert(newEntries);
+
+        if (insertError) {
+          console.error('[reorderChasseurs] Erreur lors de l\'insertion:', insertError);
+          throw insertError;
+        }
+      }
+
+      console.info('[reorderChasseurs] Chasseurs réorganisés avec succès');
 
     } catch (error) {
-      console.error('Erreur dans reorderChasseurs:', error);
+      console.error('[reorderChasseurs] Erreur:', error);
       throw error;
     }
   }
 
   /**
-   * Récupère toute la tier list (toutes catégories)
+   * Récupère toute la tier list (toutes catégories) depuis Supabase
    */
   static async getFullTierList(): Promise<TierListChasseurEntry[]> {
     try {
-      console.info('Récupération de la tier list complète');
-      
-      // Fallback temporaire avec localStorage
-      const categories: ChasseurCategory[] = ["breakers", "dps", "supports", "collab"];
-      const allEntries: TierListChasseurEntry[] = [];
-      
-      categories.forEach(category => {
-        const key = `tier_list_chasseurs_${category}`;
-        const categoryData = JSON.parse(localStorage.getItem(key) || '[]');
-        allEntries.push(...categoryData);
-      });
-      
-      // Trier par catégorie, tier et position
-      return allEntries.sort((a, b) => {
-        if (a.category !== b.category) {
-          return a.category.localeCompare(b.category);
-        }
-        if (a.tier !== b.tier) {
-          return a.tier.localeCompare(b.tier);
-        }
-        return a.position - b.position;
-      });
+      console.info('[getFullTierList] Récupération de la tier list complète');
+
+      const { data, error } = await supabase
+        .from('tier_list_chasseurs')
+        .select('chasseur_id, category, tier, position')
+        .order('category')
+        .order('tier')
+        .order('position');
+
+      if (error) {
+        console.error('[getFullTierList] Erreur Supabase:', error);
+        throw error;
+      }
+
+      console.log(`[getFullTierList] ${data?.length || 0} entrées récupérées`);
+      return data || [];
 
     } catch (error) {
-      console.error('Erreur dans getFullTierList:', error);
-      return [];
+      console.error('[getFullTierList] Erreur:', error);
+      throw error;
     }
   }
 }

@@ -448,17 +448,7 @@ export const ChasseursTierList: React.FC = () => {
     }
   };
 
-  const clearAllData = () => {
-    if (window.confirm("Êtes-vous sûr de vouloir réinitialiser toutes les tier lists ? Cette action est irréversible.")) {
-      const categories: ChasseurCategory[] = ["breakers", "dps", "supports", "collab"];
-      categories.forEach(cat => {
-        localStorage.removeItem(`tier_list_chasseurs_${cat}`);
-      });
-      
-      // Recharger la page pour refaire le chargement des données
-      window.location.reload();
-    }
-  };  if (loading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -532,30 +522,6 @@ export const ChasseursTierList: React.FC = () => {
                 </CardContent>
               )}
             </Card>
-
-            {/* Debug - Bouton de reset (visible uniquement en développement) */}
-            {process.env.NODE_ENV === 'development' && (
-              <Card className="bg-sidebar border-sidebar-border rounded-xl shadow-md">
-                <CardHeader className="bg-red-900/20 py-3 sm:py-4 px-3 sm:px-5 border-b border-red-500/40">
-                  <CardTitle className="flex items-center justify-between text-white">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-red-400">⚠️ Debug - Réinitialiser</span>
-                    </div>
-                    <Button
-                      onClick={clearAllData}
-                      className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-md text-white"
-                    >
-                      Réinitialiser toutes les tier lists
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-3 sm:p-4 md:p-6">
-                  <p className="text-sm text-gray-400">
-                    Si vous voyez des chasseurs dupliqués entre les catégories, utilisez ce bouton pour nettoyer les données corrompues.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
 
             <DndContext
               sensors={sensors}

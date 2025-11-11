@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sword, Shield, Users, Trophy } from "lucide-react";
+import { Sword, Shield, Users, Trophy, Globe } from "lucide-react";
 import { AdminLayout } from "@/admin/components/layout/AdminLayout";
 import { WeaponsTierList } from "./components/WeaponsTierList.tsx";
 import { ChasseursTierList } from "./components/ChasseursTierList.tsx";
+import { GlobalChasseursTierList } from "./components/GlobalChasseursTierList.tsx";
 import TeamsChasseursAdmin from "./components/TeamsChasseursAdmin";
 
 const TierListAdminPage: React.FC = () => {
@@ -16,6 +17,12 @@ const TierListAdminPage: React.FC = () => {
       label: "Armes",
       icon: <Sword className="h-4 w-4" />,
       component: <WeaponsTierList />,
+    },
+    {
+      id: "global",
+      label: "Global",
+      icon: <Globe className="h-4 w-4" />,
+      component: <GlobalChasseursTierList />,
     },
     {
       id: "hunters",
@@ -62,10 +69,10 @@ const TierListAdminPage: React.FC = () => {
           </CardHeader>
           <CardContent className="p-3 sm:p-4 md:p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="tier-list-tabs grid w-full grid-cols-3 bg-sidebar-accent [&>button[data-state=active]:hover]:bg-amber-600">
+              <TabsList className="tier-list-tabs grid w-full grid-cols-4 bg-sidebar-accent [&>button[data-state=active]:hover]:bg-amber-600">
                 {tierListTabs.map((tab) => (
-                  <TabsTrigger 
-                    key={tab.id} 
+                  <TabsTrigger
+                    key={tab.id}
                     value={tab.id}
                     className="flex items-center gap-2 text-sidebar-foreground/80 hover:text-white hover:bg-sidebar-accent data-[state=active]:text-white data-[state=active]:bg-amber-600"
                   >

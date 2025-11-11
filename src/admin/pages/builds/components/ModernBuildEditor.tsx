@@ -846,7 +846,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                     <h4 className="text-sm font-semibold">Attributs de Base</h4>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                    {['Force', 'Vitalité', 'Agilité', 'Intelligence', 'Perception'].map(stat => (
+                    {['Force', 'Précision', 'Intélligence', 'Agilité', 'Vitalité'].map(stat => (
                       <div key={stat} className="space-y-1">
                         <Label className="text-xs text-muted-foreground">{stat}</Label>
                         <Input
@@ -870,7 +870,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                     <h4 className="text-sm font-semibold">Statistiques Offensives</h4>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                    {['Attaque supplémentaire', 'Précision', 'Taux de coup critique', 'Dégâts de coup critique', 'Hausse des dégâts', 'Pénétration de défense'].map(stat => (
+                    {['Taux de coup critique', 'Dégâts de coup critique', 'Hausse des dégâts' ,'Pénétration de défense', 'Attaque supplémentaire', 'Précision'].map(stat => (
                       <div key={stat} className="space-y-1">
                         <Label className="text-xs text-muted-foreground">{stat}</Label>
                         <Input

@@ -259,6 +259,47 @@ export class ChasseursService {
         throw new Error('La création du chasseur a échoué. Aucune donnée retournée.');
       }
 
+      // 3. Créer une entrée vide dans la table builds pour synchronisation
+      try {
+        const buildInsertData = {
+          chasseur_id: chasseur.id,
+          chasseur_nom: chasseur.nom,
+          element: chasseur.element_chasseur || 'Inconnu',
+          builds_data: { builds: {} },
+          version: 1
+        };
+
+        const { error: buildError } = await supabase
+          .from('builds')
+          .insert(buildInsertData);
+
+        if (buildError) {
+          console.error('Erreur lors de la création de l\'entrée builds:', buildError);
+
+          // Si la création dans builds échoue, supprimer le chasseur créé pour éviter les incohérences
+          console.warn('Rollback: suppression du chasseur créé car l\'insertion dans builds a échoué');
+
+          await supabase
+            .from('chasseurs')
+            .delete()
+            .eq('id', chasseur.id);
+
+          // Supprimer l'image uploadée
+          if (imageUrl) {
+            await this.deleteImage(imageUrl);
+          }
+
+          throw new Error('Impossible de créer l\'entrée dans la table builds. La création du chasseur a été annulée.');
+        }
+
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ Entrée builds créée pour le chasseur ${chasseur.id}`);
+        }
+      } catch (buildCreationError) {
+        console.error('Erreur critique lors de la synchronisation avec builds:', buildCreationError);
+        throw buildCreationError;
+      }
+
       return chasseur as Chasseur;
     } catch (error) {
       console.error('Erreur dans createChasseur:', error);
@@ -398,12 +439,30 @@ export class ChasseursService {
 
       // 1. Récupérer le chasseur pour obtenir l'URL de l'image
       const chasseur = await this.getChasseurById(id);
-      
+
       if (!chasseur) {
         throw new Error(`Le chasseur avec l'ID ${id} est introuvable.`);
       }
 
-      // 2. Supprimer le chasseur de la base de données
+      // 2. Supprimer l'entrée dans la table builds (si elle existe)
+      try {
+        const { error: buildDeleteError } = await supabase
+          .from('builds')
+          .delete()
+          .eq('chasseur_id', id);
+
+        if (buildDeleteError) {
+          console.warn('Erreur lors de la suppression de l\'entrée builds:', buildDeleteError);
+          // On continue quand même, car l'entrée n'existe peut-être pas
+        } else if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ Entrée builds supprimée pour le chasseur ${id}`);
+        }
+      } catch (buildDeleteError) {
+        console.warn('Impossible de supprimer l\'entrée builds:', buildDeleteError);
+        // On continue quand même
+      }
+
+      // 3. Supprimer le chasseur de la base de données
       const { error } = await supabase
         .from('chasseurs')
         .delete()
@@ -411,7 +470,7 @@ export class ChasseursService {
 
       if (error) {
         console.error('Erreur Supabase deleteChasseur:', error);
-        
+
         // Messages d'erreur spécifiques
         if (error.message.includes('permission')) {
           throw new Error('Vous n\'avez pas les permissions nécessaires pour supprimer ce chasseur.');
@@ -419,11 +478,11 @@ export class ChasseursService {
         if (error.message.includes('foreign key') || error.code === '23503') {
           throw new Error('Impossible de supprimer ce chasseur car il est utilisé dans d\'autres éléments (builds, équipes, etc.). Supprimez d\'abord ces références.');
         }
-        
+
         throw new Error('Impossible de supprimer le chasseur. Veuillez réessayer.');
       }
 
-      // 3. Supprimer l'image du storage (ne fait pas planter si échoue)
+      // 4. Supprimer l'image du storage (ne fait pas planter si échoue)
       if (chasseur.image) {
         try {
           await this.deleteImage(chasseur.image);

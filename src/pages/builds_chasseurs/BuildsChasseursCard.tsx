@@ -10,6 +10,11 @@ import {
   Layers,
   Dna,
   BarChart2,
+  TrendingUp,
+  Sword,
+  Shield,
+  Heart,
+  Zap,
 } from "lucide-react";
 import {
   Collapsible,
@@ -360,44 +365,110 @@ export default function BuildChasseurCard({
           </div>
 
           {/* Statistiques */}
-          <SectionCollapsible
-            label="Statistiques à viser"
-            icon={<BarChart2 className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-solo-purple" />}
-            isOpen={isSectionOpen("stats")}
-            onToggle={() => toggleSection("stats")}
-          >
-            {/* Texte informatif */}
-            <p className="text-xs sm:text-sm lg:text-base text-gray-300 leading-relaxed mb-3 sm:mb-4">
-              Voici les statistiques recommandées pour optimiser les
-              performances de ce chasseur. Adaptez-les en fonction de votre
-              style de jeu et des besoins de votre équipe.
-            </p>
+          {(() => {
+            // Définir les catégories de statistiques dans le même ordre que l'éditeur admin
+            const statCategories = [
+              {
+                key: 'base',
+                label: 'Attributs de Base',
+                icon: <TrendingUp className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-amber-400" />,
+                stats: ['Force', 'Précision', 'Intélligence', 'Agilité', 'Vitalité']
+              },
+              {
+                key: 'offensive',
+                label: 'Statistiques Offensives',
+                icon: <Sword className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-red-400" />,
+                stats: ['Taux de coup critique', 'Dégâts de coup critique', 'Hausse des dégâts', 'Pénétration de défense', 'Attaque supplémentaire', 'Précision']
+              },
+              {
+                key: 'defensive',
+                label: 'Statistiques Défensives',
+                icon: <Shield className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-blue-400" />,
+                stats: ['Défense supplémentaire', 'Réduction des dégâts']
+              },
+              {
+                key: 'vitality',
+                label: 'Vitalité & Soins',
+                icon: <Heart className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-green-400" />,
+                stats: ['PV supplémentaire', 'Hausse des soins donnés', 'Hausse des soins reçus']
+              },
+              {
+                key: 'mana',
+                label: 'Gestion des PM',
+                icon: <Zap className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-purple-400" />,
+                stats: ['PM', 'Hausse du taux de récupération des PM', 'Baisse du coût de PM']
+              }
+            ];
 
-            {/* Grille des statistiques */}
-            {build && build.stats ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-                {Object.entries(build.stats)
-                  .filter(([_, val]) => val && val.trim() !== '') // Filtrer les stats vides
-                  .map(([label, val]) => (
-                  <div
-                    key={label}
-                    className="bg-sidebar p-2 sm:p-3 rounded border border-sidebar-border"
-                  >
-                    <div className="text-[10px] sm:text-xs lg:text-sm text-solo-light-purple mb-1">
-                      {label}
-                    </div>
-                    <div className="font-medium text-xs sm:text-sm lg:text-base text-white break-words">
-                      {val}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-gray-400 text-sm">Aucune statistique disponible pour ce build</p>
-              </div>
-            )}
-          </SectionCollapsible>
+            // Vérifier si au moins une statistique a une valeur
+            const hasAnyStats = build?.stats && Object.values(build.stats).some(val => val && val.trim() !== '');
+
+            // Si aucune statistique, ne pas afficher la section
+            if (!hasAnyStats) {
+              return null;
+            }
+
+            return (
+              <SectionCollapsible
+                label="Statistiques à viser"
+                icon={<BarChart2 className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-solo-purple" />}
+                isOpen={isSectionOpen("stats")}
+                onToggle={() => toggleSection("stats")}
+              >
+                {/* Texte informatif */}
+                <p className="text-xs sm:text-sm lg:text-base text-gray-300 leading-relaxed mb-3 sm:mb-4">
+                  Voici les statistiques recommandées pour optimiser les
+                  performances de ce chasseur. Adaptez-les en fonction de votre
+                  style de jeu et des besoins de votre équipe.
+                </p>
+
+                {/* Catégories de statistiques */}
+                <div className="space-y-4">
+                  {statCategories.map(category => {
+                    // Filtrer les stats de cette catégorie qui ont une valeur
+                    const categoryStats = category.stats
+                      .map(statName => ({
+                        name: statName,
+                        value: build.stats[statName]
+                      }))
+                      .filter(stat => stat.value && stat.value.trim() !== '');
+
+                    // Si aucune stat dans cette catégorie, ne pas afficher la catégorie
+                    if (categoryStats.length === 0) {
+                      return null;
+                    }
+
+                    return (
+                      <div key={category.key} className="space-y-2">
+                        {/* En-tête de catégorie */}
+                        <div className="flex items-center gap-2">
+                          {category.icon}
+                          <h4 className="text-xs sm:text-sm font-semibold text-white">{category.label}</h4>
+                        </div>
+
+                        {/* Grille des statistiques de cette catégorie */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+                          {categoryStats.map(stat => (
+                            <div
+                              key={stat.name}
+                              className="bg-sidebar p-2 sm:p-3 rounded border border-sidebar-border"
+                            >
+                              <div className="text-[10px] sm:text-xs text-solo-light-purple mb-1">
+                                {stat.name}
+                              </div>
+                              <div className="font-medium text-xs sm:text-sm text-white break-words">
+                                {stat.value}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </SectionCollapsible>
+            );
+          })()}
 
           {/* Artefacts */}
           <SectionCollapsible
@@ -641,6 +712,60 @@ export default function BuildChasseurCard({
                 })}
             </div>
           </SectionCollapsible>
+
+          {/* Section Sets Bonus */}
+          {build.sets_bonus && build.sets_bonus.length > 0 && (
+            <SectionCollapsible
+              label="Bonus de Sets"
+              icon={<Layers className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-solo-purple" />}
+              isOpen={isSectionOpen("sets")}
+              onToggle={() => toggleSection("sets")}
+            >
+              <div className="text-xs sm:text-sm lg:text-base text-gray-300 leading-relaxed mb-3 sm:mb-4">
+                Les bonus de sets offrent des avantages supplémentaires lorsque vous équipez plusieurs artefacts du même set.
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {build.sets_bonus.map((setBonus, index) => {
+                  const setBonusData = setsBonus.find((s) => s.id === setBonus.id);
+
+                  // Si le set bonus n'est pas trouvé et qu'il n'y a aucun set chargé,
+                  // c'est probablement que les données sont en cours de chargement
+                  const isLoading = !setBonusData && (setsBonus.length === 0 || isDataLoading);
+
+                  return (
+                    <div
+                      key={index}
+                      className="bg-sidebar p-2 sm:p-3 rounded-lg border border-sidebar-border"
+                    >
+                      {isLoading ? (
+                        // État de chargement
+                        <div className="space-y-2">
+                          <div className="h-4 bg-gray-800 rounded animate-pulse"></div>
+                          <div className="h-3 bg-gray-800 rounded animate-pulse"></div>
+                          <div className="h-3 bg-gray-800 rounded animate-pulse w-3/4"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="font-semibold text-xs sm:text-sm text-solo-purple mb-1 sm:mb-2">
+                            {setBonusData?.nom || `ID: ${setBonus.id} (introuvable)`}
+                          </p>
+                          <div className="text-[10px] sm:text-2xs text-gray-300 space-y-1">
+                            {setBonusData?.description
+                              ?.replace(/<br\s*\/?>/gi, "\n")
+                              ?.split("\n")
+                              .map((line, idx) => (
+                                <p key={idx}>{formatTextWithBrackets(line)}</p>
+                              )) || "Aucune description disponible"}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </SectionCollapsible>
+          )}
         </CardContent>
       )}
     </Card>

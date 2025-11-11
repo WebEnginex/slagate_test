@@ -83,7 +83,7 @@ export class OmbresService {
         throw new Error('Le nom de l\'ombre est requis pour l\'upload de l\'image.');
       }
 
-      // Générer un nom de fichier basé sur le nom de l'ombre
+      // Générer un nom de fichier UNIQUE basé sur le nom de l'ombre + timestamp
       // Remplacer les espaces par des underscores et supprimer les caractères spéciaux
       const cleanName = ombreNom
         .trim()
@@ -94,14 +94,18 @@ export class OmbresService {
         throw new Error('Le nom de l\'ombre contient des caractères non valides.');
       }
 
-      const fileName = `${cleanName}.webp`;
+      // Ajouter un timestamp pour garantir l'unicité du nom de fichier
+      const timestamp = Date.now();
+      const fileName = `${cleanName}_${timestamp}.webp`;
 
-      // Upload le fichier
+      console.log('[DEBUG] uploadImage - fileName:', fileName);
+
+      // Upload le fichier (upsert: false pour éviter d'écraser un fichier existant)
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           contentType: 'image/webp',
-          upsert: true
+          upsert: false
         });
 
       if (error) {
@@ -151,27 +155,31 @@ export class OmbresService {
   static async deleteImage(imageUrl: string): Promise<void> {
     try {
       if (!imageUrl) {
-        console.warn('Tentative de suppression d\'une image sans URL');
+        console.warn('[deleteImage] Tentative de suppression d\'une image sans URL');
         return;
       }
 
       // Extraire le nom du fichier depuis l'URL
       const fileName = imageUrl.split('/').pop();
       if (!fileName) {
-        console.warn('URL d\'image invalide pour la suppression:', imageUrl);
+        console.warn('[deleteImage] URL d\'image invalide pour la suppression:', imageUrl);
         return;
       }
+
+      console.log('[DEBUG] deleteImage - fileName:', fileName);
 
       const { error } = await supabase.storage
         .from(BUCKET_NAME)
         .remove([fileName]);
 
       if (error) {
-        console.error('Erreur lors de la suppression de l\'image:', error);
+        console.error('[deleteImage] Erreur lors de la suppression de l\'image:', error);
         // Ne pas faire planter si la suppression échoue (l'image n'existe peut-être plus)
+      } else {
+        console.log('[DEBUG] deleteImage - Image supprimée avec succès:', fileName);
       }
     } catch (error) {
-      console.error('Erreur dans deleteImage:', error);
+      console.error('[deleteImage] Erreur dans deleteImage:', error);
       // Ne pas faire planter l'opération principale
     }
   }
@@ -272,6 +280,12 @@ export class OmbresService {
         throw new Error('ID d\'ombre invalide.');
       }
 
+      // 0. Vérifier que l'ombre existe AVANT toute opération
+      const existingOmbre = await this.getOmbreById(id);
+      if (!existingOmbre) {
+        throw new Error(`L'ombre avec l'ID ${id} est introuvable.`);
+      }
+
       // Validation des données si fournies
       if (data.nom !== undefined) {
         if (!data.nom || data.nom.trim().length === 0) {
@@ -291,17 +305,15 @@ export class OmbresService {
       let newImageUrl: string | null = null;
       let oldImageUrl: string | null = null;
 
-      // 1. Récupérer l'ancienne image si on va la remplacer
+      // 1. Upload de la nouvelle image si fournie
       if (imageFile) {
-        try {
-          const ombre = await this.getOmbreById(id);
-          if (!ombre) {
-            throw new Error(`L'ombre avec l'ID ${id} est introuvable.`);
-          }
-          oldImageUrl = ombre.image || null;
+        oldImageUrl = existingOmbre.image || null;
+        console.log('[DEBUG] updateOmbre - oldImageUrl:', oldImageUrl);
 
-          // Upload de la nouvelle image
-          newImageUrl = await this.uploadImage(imageFile, data.nom || ombre.nom || 'Ombre');
+        // Upload de la nouvelle image
+        try {
+          newImageUrl = await this.uploadImage(imageFile, data.nom || existingOmbre.nom || 'Ombre');
+          console.log('[DEBUG] updateOmbre - newImageUrl:', newImageUrl);
         } catch (uploadError) {
           console.error('Erreur upload nouvelle image:', uploadError);
           throw uploadError; // Propager l'erreur d'upload
@@ -320,6 +332,8 @@ export class OmbresService {
       }
 
       // 3. Mettre à jour l'ombre
+      console.log('[DEBUG] updateOmbre - ID:', id, 'updateData:', updateData);
+
       const { data: ombre, error } = await supabase
         .from('ombres')
         .update(updateData)
@@ -329,7 +343,7 @@ export class OmbresService {
 
       if (error) {
         console.error('Erreur Supabase updateOmbre:', error);
-        
+
         // Supprimer la nouvelle image en cas d'erreur
         if (newImageUrl) {
           await this.deleteImage(newImageUrl);
@@ -343,9 +357,13 @@ export class OmbresService {
           throw new Error('Vous n\'avez pas les permissions nécessaires pour modifier cette ombre.');
         }
         if (error.code === 'PGRST116') {
-          throw new Error(`L'ombre avec l'ID ${id} est introuvable.`);
+          // PGRST116 avec "0 rows" peut indiquer un problème de permissions RLS
+          if (error.details?.includes('0 rows')) {
+            throw new Error('Impossible de mettre à jour l\'ombre. Vérifiez vos permissions ou que l\'ombre existe toujours.');
+          }
+          throw new Error('L\'ombre a été supprimée entre-temps. Veuillez rafraîchir la page.');
         }
-        
+
         throw new Error('Impossible de mettre à jour l\'ombre. Vérifiez les données saisies et réessayez.');
       }
 
@@ -359,9 +377,15 @@ export class OmbresService {
 
       // 4. Supprimer l'ancienne image si tout s'est bien passé
       if (oldImageUrl && newImageUrl) {
+        console.log('[DEBUG] updateOmbre - Suppression de l\'ancienne image...');
         await this.deleteImage(oldImageUrl);
+      } else if (oldImageUrl && !newImageUrl) {
+        console.log('[DEBUG] updateOmbre - Ancienne image conservée (pas de nouvelle image)');
+      } else if (!oldImageUrl && newImageUrl) {
+        console.log('[DEBUG] updateOmbre - Première image ajoutée (pas d\'ancienne image)');
       }
 
+      console.log('[DEBUG] updateOmbre - Mise à jour réussie, ombre retournée:', ombre);
       return ombre as Ombre;
     } catch (error) {
       console.error('Erreur dans updateOmbre:', error);

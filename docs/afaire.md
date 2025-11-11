@@ -1,7 +1,19 @@
-1️⃣ Changement d’image des noyaux
-2️⃣ Changement d’image des ombres
+
 3️⃣ Ajouter une tier list globale
 4️⃣ Options de noyaux : afficher dans cet ordre → Meilleur, puis Alternative 1, Alternative 2, Alternative 3, etc.
+
+
+
+
+
+
+
+
+
+
+✅ Changement d’image des noyaux
+✅ Changement d’image des ombres
+
 ✅ Ordre d’affichage des stats :
 Force - Précision - Intelligence - Taux de coup critique - Dégâts de coup critique - Hausse de dégâts - Pénétration de défense
 ✅ Les bonus de sets ne s’affichent pas sur l’onglet de build

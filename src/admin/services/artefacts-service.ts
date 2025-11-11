@@ -83,7 +83,7 @@ export class ArtefactsService {
         throw new Error('Le nom de l\'artefact est requis pour l\'upload de l\'image.');
       }
 
-      // Générer un nom de fichier basé sur le nom de l'artefact
+      // Générer un nom de fichier UNIQUE basé sur le nom de l'artefact + timestamp
       // Remplacer les espaces par des underscores et supprimer les caractères spéciaux
       const cleanName = artefactNom
         .trim()
@@ -94,14 +94,16 @@ export class ArtefactsService {
         throw new Error('Le nom de l\'artefact contient des caractères non valides.');
       }
 
-      const fileName = `${cleanName}.webp`;
+      // Ajouter un timestamp pour garantir l'unicité du nom de fichier
+      const timestamp = Date.now();
+      const fileName = `${cleanName}_${timestamp}.webp`;
 
-      // Upload le fichier
+      // Upload le fichier (upsert: false pour éviter d'écraser un fichier existant)
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           contentType: 'image/webp',
-          upsert: true
+          upsert: false
         });
 
       if (error) {
@@ -276,6 +278,12 @@ export class ArtefactsService {
         throw new Error('ID d\'artefact invalide.');
       }
 
+      // 0. Vérifier que l'artefact existe AVANT toute opération
+      const existingArtefact = await this.getArtefactById(id);
+      if (!existingArtefact) {
+        throw new Error(`L'artefact avec l'ID ${id} est introuvable.`);
+      }
+
       // Validation des données si fournies
       if (data.nom !== undefined) {
         if (!data.nom || data.nom.trim().length === 0) {
@@ -295,17 +303,13 @@ export class ArtefactsService {
       let newImageUrl: string | null = null;
       let oldImageUrl: string | null = null;
 
-      // 1. Récupérer l'ancienne image si on va la remplacer
+      // 1. Upload de la nouvelle image si fournie
       if (imageFile) {
-        try {
-          const artefact = await this.getArtefactById(id);
-          if (!artefact) {
-            throw new Error(`L'artefact avec l'ID ${id} est introuvable.`);
-          }
-          oldImageUrl = artefact.image || null;
+        oldImageUrl = existingArtefact.image || null;
 
-          // Upload de la nouvelle image
-          newImageUrl = await this.uploadImage(imageFile, data.nom || artefact.nom || 'Artefact');
+        // Upload de la nouvelle image
+        try {
+          newImageUrl = await this.uploadImage(imageFile, data.nom || existingArtefact.nom || 'Artefact');
         } catch (uploadError) {
           console.error('Erreur upload nouvelle image:', uploadError);
           throw uploadError; // Propager l'erreur d'upload
@@ -333,7 +337,7 @@ export class ArtefactsService {
 
       if (error) {
         console.error('Erreur Supabase updateArtefact:', error);
-        
+
         // Supprimer la nouvelle image en cas d'erreur
         if (newImageUrl) {
           await this.deleteImage(newImageUrl);
@@ -347,9 +351,9 @@ export class ArtefactsService {
           throw new Error('Vous n\'avez pas les permissions nécessaires pour modifier cet artefact.');
         }
         if (error.code === 'PGRST116') {
-          throw new Error(`L'artefact avec l'ID ${id} est introuvable.`);
+          throw new Error('L\'artefact a été supprimé entre-temps. Veuillez rafraîchir la page.');
         }
-        
+
         throw new Error('Impossible de mettre à jour l\'artefact. Vérifiez les données saisies et réessayez.');
       }
 

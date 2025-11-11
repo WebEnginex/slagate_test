@@ -83,7 +83,7 @@ export class ChasseursService {
         throw new Error('Le nom du chasseur est requis pour l\'upload de l\'image.');
       }
 
-      // Générer un nom de fichier basé sur le nom du chasseur
+      // Générer un nom de fichier UNIQUE basé sur le nom du chasseur + timestamp
       // Remplacer les espaces par des underscores et supprimer les caractères spéciaux
       const cleanName = chasseurNom
         .trim()
@@ -94,14 +94,16 @@ export class ChasseursService {
         throw new Error('Le nom du chasseur contient des caractères non valides.');
       }
 
-      const fileName = `${cleanName}_Portrait.webp`;
+      // Ajouter un timestamp pour garantir l'unicité du nom de fichier
+      const timestamp = Date.now();
+      const fileName = `${cleanName}_Portrait_${timestamp}.webp`;
 
-      // Upload le fichier
+      // Upload le fichier (upsert: false pour éviter d'écraser un fichier existant)
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           contentType: 'image/webp',
-          upsert: true
+          upsert: false
         });
 
       if (error) {
@@ -324,6 +326,12 @@ export class ChasseursService {
         throw new Error('ID de chasseur invalide.');
       }
 
+      // 0. Vérifier que le chasseur existe AVANT toute opération
+      const existingChasseur = await this.getChasseurById(id);
+      if (!existingChasseur) {
+        throw new Error(`Le chasseur avec l'ID ${id} est introuvable.`);
+      }
+
       // Validation des données si fournies
       if (data.nom !== undefined) {
         if (!data.nom || data.nom.trim().length === 0) {
@@ -343,17 +351,13 @@ export class ChasseursService {
       let newImageUrl: string | null = null;
       let oldImageUrl: string | null = null;
 
-      // 1. Récupérer l'ancienne image si on va la remplacer
+      // 1. Upload de la nouvelle image si fournie
       if (imageFile) {
-        try {
-          const chasseur = await this.getChasseurById(id);
-          if (!chasseur) {
-            throw new Error(`Le chasseur avec l'ID ${id} est introuvable.`);
-          }
-          oldImageUrl = chasseur.image || null;
+        oldImageUrl = existingChasseur.image || null;
 
-          // Upload de la nouvelle image
-          newImageUrl = await this.uploadImage(imageFile, data.nom || chasseur.nom || 'Chasseur');
+        // Upload de la nouvelle image
+        try {
+          newImageUrl = await this.uploadImage(imageFile, data.nom || existingChasseur.nom || 'Chasseur');
         } catch (uploadError) {
           console.error('Erreur upload nouvelle image:', uploadError);
           throw uploadError; // Propager l'erreur d'upload
@@ -384,7 +388,7 @@ export class ChasseursService {
 
       if (error) {
         console.error('Erreur Supabase updateChasseur:', error);
-        
+
         // Supprimer la nouvelle image en cas d'erreur
         if (newImageUrl) {
           await this.deleteImage(newImageUrl);
@@ -398,9 +402,9 @@ export class ChasseursService {
           throw new Error('Vous n\'avez pas les permissions nécessaires pour modifier ce chasseur.');
         }
         if (error.code === 'PGRST116') {
-          throw new Error(`Le chasseur avec l'ID ${id} est introuvable.`);
+          throw new Error('Le chasseur a été supprimé entre-temps. Veuillez rafraîchir la page.');
         }
-        
+
         throw new Error('Impossible de mettre à jour le chasseur. Vérifiez les données saisies et réessayez.');
       }
 

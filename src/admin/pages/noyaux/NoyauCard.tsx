@@ -28,16 +28,26 @@ export const NoyauCard: React.FC<NoyauCardProps> = ({ noyau, onEdit, onDelete })
           {/* Image du noyau */}
           <div className="relative flex-shrink-0">
             {noyau.image ? (
-              <img 
-                src={noyau.image} 
+              <img
+                src={noyau.image}
                 alt={noyau.nom}
                 className="w-16 h-16 rounded-md object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/64?text=No+Image';
+                  // En cas d'erreur de chargement, afficher un placeholder local
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `
+                      <div class="w-16 h-16 rounded-md bg-muted flex items-center justify-center text-muted-foreground text-xs border border-border">
+                        <span class="text-center px-1">Image<br/>introuvable</span>
+                      </div>
+                    `;
+                  }
                 }}
               />
             ) : (
-              <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center text-muted-foreground text-xs">
+              <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center text-muted-foreground text-xs border border-border">
                 Pas d'image
               </div>
             )}

@@ -89,7 +89,7 @@ export class NoyauxService {
         throw new Error('Le nom du noyau est requis pour l\'upload de l\'image.');
       }
 
-      // Générer un nom de fichier basé sur le nom du noyau
+      // Générer un nom de fichier UNIQUE basé sur le nom du noyau + timestamp
       // Remplacer les espaces par des underscores et supprimer les caractères spéciaux
       const cleanName = noyauNom
         .trim()
@@ -100,14 +100,18 @@ export class NoyauxService {
         throw new Error('Le nom du noyau contient des caractères non valides.');
       }
 
-      const fileName = `${cleanName}.webp`;
+      // Ajouter un timestamp pour garantir l'unicité du nom de fichier
+      const timestamp = Date.now();
+      const fileName = `${cleanName}_${timestamp}.webp`;
 
-      // Upload le fichier
+      console.log('[DEBUG] uploadImage - fileName:', fileName);
+
+      // Upload le fichier (upsert: false pour éviter d'écraser un fichier existant)
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           contentType: 'image/webp',
-          upsert: true
+          upsert: false
         });
 
       if (error) {
@@ -157,27 +161,31 @@ export class NoyauxService {
   static async deleteImage(imageUrl: string): Promise<void> {
     try {
       if (!imageUrl) {
-        console.warn('Tentative de suppression d\'une image sans URL');
+        console.warn('[deleteImage] Tentative de suppression d\'une image sans URL');
         return;
       }
 
       // Extraire le nom du fichier depuis l'URL
       const fileName = imageUrl.split('/').pop();
       if (!fileName) {
-        console.warn('URL d\'image invalide pour la suppression:', imageUrl);
+        console.warn('[deleteImage] URL d\'image invalide pour la suppression:', imageUrl);
         return;
       }
+
+      console.log('[DEBUG] deleteImage - fileName:', fileName);
 
       const { error } = await supabase.storage
         .from(BUCKET_NAME)
         .remove([fileName]);
 
       if (error) {
-        console.error('Erreur lors de la suppression de l\'image:', error);
+        console.error('[deleteImage] Erreur lors de la suppression de l\'image:', error);
         // Ne pas faire planter si la suppression échoue (l'image n'existe peut-être plus)
+      } else {
+        console.log('[DEBUG] deleteImage - Image supprimée avec succès:', fileName);
       }
     } catch (error) {
-      console.error('Erreur dans deleteImage:', error);
+      console.error('[deleteImage] Erreur dans deleteImage:', error);
       // Ne pas faire planter l'opération principale
     }
   }
@@ -298,6 +306,17 @@ export class NoyauxService {
     imageFile?: File
   ): Promise<Noyau> {
     try {
+      // Validation de l'ID
+      if (!id || id <= 0) {
+        throw new Error('ID de noyau invalide.');
+      }
+
+      // 0. Vérifier que le noyau existe AVANT toute opération
+      const existingNoyau = await this.getNoyauById(id);
+      if (!existingNoyau) {
+        throw new Error(`Le noyau avec l'ID ${id} est introuvable.`);
+      }
+
       // Validation des données d'entrée
       if (data.nom !== undefined) {
         if (!data.nom || data.nom.trim().length === 0) {
@@ -335,17 +354,15 @@ export class NoyauxService {
       let newImageUrl: string | null = null;
       let oldImageUrl: string | null = null;
 
-      // 1. Récupérer l'ancienne image si on va la remplacer
+      // 1. Upload de la nouvelle image si fournie
       if (imageFile) {
-        const noyau = await this.getNoyauById(id);
-        if (!noyau) {
-          throw new Error('Le noyau à modifier est introuvable.');
-        }
-        oldImageUrl = noyau.image || null;
+        oldImageUrl = existingNoyau.image || null;
+        console.log('[DEBUG] updateNoyau - oldImageUrl:', oldImageUrl);
 
         // Upload de la nouvelle image
         try {
-          newImageUrl = await this.uploadImage(imageFile, data.nom || noyau.nom);
+          newImageUrl = await this.uploadImage(imageFile, data.nom || existingNoyau.nom);
+          console.log('[DEBUG] updateNoyau - newImageUrl:', newImageUrl);
         } catch (uploadError) {
           console.error('Erreur upload nouvelle image:', uploadError);
           throw uploadError;
@@ -359,7 +376,14 @@ export class NoyauxService {
       if (data.description !== undefined) updateData.description = data.description?.trim() || null;
       if (newImageUrl) updateData.image = newImageUrl;
 
+      // Vérifier qu'il y a au moins un champ à mettre à jour
+      if (Object.keys(updateData).length === 0) {
+        throw new Error('Aucune modification à enregistrer.');
+      }
+
       // 3. Mettre à jour le noyau
+      console.log('[DEBUG] updateNoyau - ID:', id, 'updateData:', updateData);
+
       const { data: noyau, error } = await supabase
         .from('noyaux')
         .update(updateData)
@@ -369,16 +393,13 @@ export class NoyauxService {
 
       if (error) {
         console.error('Erreur Supabase updateNoyau:', error);
-        
+
         // Supprimer la nouvelle image en cas d'erreur
         if (newImageUrl) {
           await this.deleteImage(newImageUrl);
         }
 
         // Messages d'erreur spécifiques
-        if (error.code === 'PGRST116') {
-          throw new Error('Le noyau à modifier est introuvable.');
-        }
         if (error.message.includes('duplicate') || error.code === '23505') {
           throw new Error('Un noyau avec ce nom existe déjà. Veuillez choisir un nom différent.');
         }
@@ -388,7 +409,14 @@ export class NoyauxService {
         if (error.message.includes('check') || error.code === '23514') {
           throw new Error('Le slot doit être 1, 2 ou 3.');
         }
-        
+        if (error.code === 'PGRST116') {
+          // PGRST116 avec "0 rows" peut indiquer un problème de permissions RLS
+          if (error.details?.includes('0 rows')) {
+            throw new Error('Impossible de mettre à jour le noyau. Vérifiez vos permissions ou que le noyau existe toujours.');
+          }
+          throw new Error('Le noyau a été supprimé entre-temps. Veuillez rafraîchir la page.');
+        }
+
         throw new Error('Impossible de mettre à jour le noyau. Vérifiez les données saisies et réessayez.');
       }
 
@@ -402,9 +430,15 @@ export class NoyauxService {
 
       // 4. Supprimer l'ancienne image si tout s'est bien passé
       if (oldImageUrl && newImageUrl) {
+        console.log('[DEBUG] updateNoyau - Suppression de l\'ancienne image...');
         await this.deleteImage(oldImageUrl);
+      } else if (oldImageUrl && !newImageUrl) {
+        console.log('[DEBUG] updateNoyau - Ancienne image conservée (pas de nouvelle image)');
+      } else if (!oldImageUrl && newImageUrl) {
+        console.log('[DEBUG] updateNoyau - Première image ajoutée (pas d\'ancienne image)');
       }
 
+      console.log('[DEBUG] updateNoyau - Mise à jour réussie, noyau retourné:', noyau);
       return noyau as Noyau;
     } catch (error) {
       console.error('Erreur dans updateNoyau:', error);

@@ -89,7 +89,7 @@ export class ArmesService {
         throw new Error('Le nom de l\'arme est requis pour l\'upload de l\'image.');
       }
 
-      // Générer un nom de fichier basé sur le nom de l'arme
+      // Générer un nom de fichier UNIQUE basé sur le nom de l'arme + timestamp
       // Remplacer les espaces par des underscores et supprimer les caractères spéciaux
       const cleanName = armeNom
         .trim()
@@ -100,14 +100,16 @@ export class ArmesService {
         throw new Error('Le nom de l\'arme contient des caractères non valides.');
       }
 
-      const fileName = `${cleanName}.webp`;
+      // Ajouter un timestamp pour garantir l'unicité du nom de fichier
+      const timestamp = Date.now();
+      const fileName = `${cleanName}_${timestamp}.webp`;
 
-      // Upload le fichier
+      // Upload le fichier (upsert: false pour éviter d'écraser un fichier existant)
       const { data, error } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(fileName, file, {
           contentType: 'image/webp',
-          upsert: true
+          upsert: false
         });
 
       if (error) {
@@ -157,27 +159,31 @@ export class ArmesService {
   static async deleteImage(imageUrl: string): Promise<void> {
     try {
       if (!imageUrl) {
-        console.warn('Tentative de suppression d\'une image sans URL');
+        console.warn('[deleteImage] Tentative de suppression d\'une image sans URL');
         return;
       }
 
       // Extraire le nom du fichier depuis l'URL
       const fileName = imageUrl.split('/').pop();
       if (!fileName) {
-        console.warn('URL d\'image invalide pour la suppression:', imageUrl);
+        console.warn('[deleteImage] URL d\'image invalide pour la suppression:', imageUrl);
         return;
       }
+
+      console.log('[DEBUG] deleteImage - fileName:', fileName);
 
       const { error } = await supabase.storage
         .from(BUCKET_NAME)
         .remove([fileName]);
 
       if (error) {
-        console.error('Erreur lors de la suppression de l\'image:', error);
+        console.error('[deleteImage] Erreur lors de la suppression de l\'image:', error);
         // Ne pas faire planter si la suppression échoue (l'image n'existe peut-être plus)
+      } else {
+        console.log('[DEBUG] deleteImage - Image supprimée avec succès:', fileName);
       }
     } catch (error) {
-      console.error('Erreur dans deleteImage:', error);
+      console.error('[deleteImage] Erreur dans deleteImage:', error);
       // Ne pas faire planter l'opération principale
     }
   }
@@ -290,6 +296,12 @@ export class ArmesService {
     imageFile?: File
   ): Promise<JinwooArme> {
     try {
+      // 0. Vérifier que l'arme existe AVANT toute opération
+      const existingArme = await this.getArmeById(id);
+      if (!existingArme) {
+        throw new Error('L\'arme à modifier est introuvable.');
+      }
+
       // Validation des données d'entrée
       if (data.nom !== undefined) {
         if (!data.nom || data.nom.trim().length === 0) {
@@ -327,17 +339,15 @@ export class ArmesService {
       let newImageUrl: string | null = null;
       let oldImageUrl: string | null = null;
 
-      // 1. Récupérer l'ancienne image si on va la remplacer
+      // 1. Upload de la nouvelle image si fournie
       if (imageFile) {
-        const arme = await this.getArmeById(id);
-        if (!arme) {
-          throw new Error('L\'arme à modifier est introuvable.');
-        }
-        oldImageUrl = arme.image || null;
+        oldImageUrl = existingArme.image || null;
+        console.log('[DEBUG] updateArme - oldImageUrl:', oldImageUrl);
 
         // Upload de la nouvelle image
         try {
-          newImageUrl = await this.uploadImage(imageFile, data.nom || arme.nom);
+          newImageUrl = await this.uploadImage(imageFile, data.nom || existingArme.nom);
+          console.log('[DEBUG] updateArme - newImageUrl:', newImageUrl);
         } catch (uploadError) {
           console.error('Erreur upload nouvelle image:', uploadError);
           throw uploadError;
@@ -355,6 +365,8 @@ export class ArmesService {
       if (newImageUrl) updateData.image = newImageUrl;
 
       // 3. Mettre à jour l'arme
+      console.log('[DEBUG] updateArme - ID:', id, 'updateData:', updateData);
+
       const { data: arme, error } = await supabase
         .from('jinwoo_armes')
         .update(updateData)
@@ -364,7 +376,7 @@ export class ArmesService {
 
       if (error) {
         console.error('Erreur Supabase updateArme:', error);
-        
+
         // Supprimer la nouvelle image en cas d'erreur
         if (newImageUrl) {
           await this.deleteImage(newImageUrl);
@@ -372,7 +384,11 @@ export class ArmesService {
 
         // Messages d'erreur spécifiques
         if (error.code === 'PGRST116') {
-          throw new Error('L\'arme à modifier est introuvable.');
+          // PGRST116 avec "0 rows" peut indiquer un problème de permissions RLS
+          if (error.details?.includes('0 rows')) {
+            throw new Error('Impossible de mettre à jour l\'arme. Vérifiez vos permissions ou que l\'arme existe toujours.');
+          }
+          throw new Error('L\'arme a été supprimée entre-temps. Veuillez rafraîchir la page.');
         }
         if (error.message.includes('duplicate') || error.code === '23505') {
           throw new Error('Une arme avec ce nom existe déjà. Veuillez choisir un nom différent.');
@@ -380,7 +396,7 @@ export class ArmesService {
         if (error.message.includes('permission')) {
           throw new Error('Vous n\'avez pas les permissions nécessaires pour modifier cette arme.');
         }
-        
+
         throw new Error('Impossible de mettre à jour l\'arme. Vérifiez les données saisies et réessayez.');
       }
 
@@ -394,9 +410,15 @@ export class ArmesService {
 
       // 4. Supprimer l'ancienne image si tout s'est bien passé
       if (oldImageUrl && newImageUrl) {
+        console.log('[DEBUG] updateArme - Suppression de l\'ancienne image...');
         await this.deleteImage(oldImageUrl);
+      } else if (oldImageUrl && !newImageUrl) {
+        console.log('[DEBUG] updateArme - Ancienne image conservée (pas de nouvelle image)');
+      } else if (!oldImageUrl && newImageUrl) {
+        console.log('[DEBUG] updateArme - Première image ajoutée (pas d\'ancienne image)');
       }
 
+      console.log('[DEBUG] updateArme - Mise à jour réussie, arme retournée:', arme);
       return arme as JinwooArme;
     } catch (error) {
       console.error('Erreur dans updateArme:', error);

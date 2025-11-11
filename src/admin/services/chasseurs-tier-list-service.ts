@@ -90,95 +90,103 @@ export class ChasseursTierListService {
   }
 
   /**
-   * Récupère la tier list pour une catégorie donnée
-   * Utilise localStorage temporairement en attendant que les types Supabase soient mis à jour
+   * Récupère la tier list pour une catégorie donnée depuis Supabase
    */
   static async getTierListByCategory(category: ChasseurCategory): Promise<TierListChasseurEntry[]> {
     try {
-      console.info(`Récupération de la tier list pour la catégorie: ${category}`);
-      
-      // Fallback temporaire avec localStorage
-      const key = `tier_list_chasseurs_${category}`;
-      const storedData = localStorage.getItem(key);
-      const tierListData: TierListChasseurEntry[] = storedData ? JSON.parse(storedData) : [];
-      
-      console.log(`localStorage pour ${category}:`, tierListData);
-      
-      // Trier par tier et position
-      const sortedData = tierListData.sort((a, b) => {
-        if (a.tier !== b.tier) {
-          return a.tier.localeCompare(b.tier);
-        }
-        return a.position - b.position;
-      });
-      
-      console.log(`Données triées pour ${category}:`, sortedData);
-      return sortedData;
+      console.info(`[getTierListByCategory] Récupération de la tier list pour la catégorie: ${category}`);
+
+      const { data, error } = await supabase
+        .from('tier_list_chasseurs')
+        .select('chasseur_id, category, tier, position')
+        .eq('category', category)
+        .order('tier')
+        .order('position');
+
+      if (error) {
+        console.error('[getTierListByCategory] Erreur Supabase:', error);
+        throw error;
+      }
+
+      console.log(`[getTierListByCategory] ${data?.length || 0} entrées récupérées pour ${category}`);
+      return data || [];
 
     } catch (error) {
-      console.error('Erreur dans getTierListByCategory:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Met à jour le tier d'un chasseur
-   * Utilise localStorage temporairement en attendant que les types Supabase soient mis à jour
-   */
-  static async updateChasseurTier(
-    chasseurId: number, 
-    category: ChasseurCategory, 
-    tier: TierRank, 
-    position: number
-  ): Promise<void> {
-    try {
-      console.info(`Mise à jour du chasseur ${chasseurId} dans ${category}/${tier} position ${position}`);
-      
-      // Fallback temporaire avec localStorage
-      const key = `tier_list_chasseurs_${category}`;
-      const existingData = JSON.parse(localStorage.getItem(key) || '[]');
-      
-      // Supprimer l'ancienne entrée pour ce chasseur
-      const filteredData = existingData.filter((entry: TierListChasseurEntry) => entry.chasseur_id !== chasseurId);
-      
-      // Ajouter la nouvelle entrée
-      filteredData.push({
-        chasseur_id: chasseurId,
-        category,
-        tier,
-        position
-      });
-      
-      localStorage.setItem(key, JSON.stringify(filteredData));
-      
-      console.info('Tier list mise à jour localement (temporaire)');
-      
-    } catch (error) {
-      console.error('Erreur dans updateChasseurTier:', error);
+      console.error('[getTierListByCategory] Erreur:', error);
       throw error;
     }
   }
 
   /**
-   * Supprime un chasseur de la tier list d'une catégorie
+   * Met à jour le tier d'un chasseur dans Supabase
+   * Utilise upsert pour créer ou mettre à jour l'entrée
+   */
+  static async updateChasseurTier(
+    chasseurId: number,
+    category: ChasseurCategory,
+    tier: TierRank,
+    position: number
+  ): Promise<void> {
+    try {
+      console.info(`[updateChasseurTier] Mise à jour du chasseur ${chasseurId} dans ${category}/${tier} position ${position}`);
+
+      // 1. Supprimer l'ancienne entrée pour ce chasseur dans cette catégorie
+      const { error: deleteError } = await supabase
+        .from('tier_list_chasseurs')
+        .delete()
+        .eq('chasseur_id', chasseurId)
+        .eq('category', category);
+
+      if (deleteError) {
+        console.error('[updateChasseurTier] Erreur lors de la suppression:', deleteError);
+        // On continue même si la suppression échoue (l'entrée n'existe peut-être pas)
+      }
+
+      // 2. Insérer la nouvelle entrée
+      const { error: insertError } = await supabase
+        .from('tier_list_chasseurs')
+        .insert({
+          chasseur_id: chasseurId,
+          category,
+          tier,
+          position
+        });
+
+      if (insertError) {
+        console.error('[updateChasseurTier] Erreur lors de l\'insertion:', insertError);
+        throw insertError;
+      }
+
+      console.info('[updateChasseurTier] Chasseur mis à jour avec succès');
+
+    } catch (error) {
+      console.error('[updateChasseurTier] Erreur:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Supprime un chasseur de la tier list d'une catégorie dans Supabase
    */
   static async removeChasseurFromTier(chasseurId: number, category: ChasseurCategory): Promise<void> {
     try {
-      console.info(`Suppression du chasseur ${chasseurId} de la catégorie ${category}`);
-      
-      // Fallback temporaire avec localStorage
-      const key = `tier_list_chasseurs_${category}`;
-      const existingData = JSON.parse(localStorage.getItem(key) || '[]');
-      
-      // Supprimer l'entrée pour ce chasseur
-      const filteredData = existingData.filter((entry: TierListChasseurEntry) => entry.chasseur_id !== chasseurId);
-      
-      localStorage.setItem(key, JSON.stringify(filteredData));
-      
-      console.info('Chasseur supprimé de la tier list localement (temporaire)');
+      console.info(`[removeChasseurFromTier] Suppression du chasseur ${chasseurId} de la catégorie ${category}`);
+
+      const { error } = await supabase
+        .from('tier_list_chasseurs')
+        .delete()
+        .eq('chasseur_id', chasseurId)
+        .eq('category', category);
+
+      if (error) {
+        console.error('[removeChasseurFromTier] Erreur Supabase:', error);
+        throw error;
+      }
+
+      console.info('[removeChasseurFromTier] Chasseur supprimé avec succès');
 
     } catch (error) {
-      console.error('Erreur dans removeChasseurFromTier:', error);
+      console.error('[removeChasseurFromTier] Erreur:', error);
       throw error;
     }
   }

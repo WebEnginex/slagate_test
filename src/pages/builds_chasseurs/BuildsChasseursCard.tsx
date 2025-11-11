@@ -249,19 +249,18 @@ export default function BuildChasseurCard({
 
   const isSectionOpen = (key: string) => openSections.includes(key);
 
-  // Fonction pour gérer l'alternance des noyaux
-  const handleNoyauAlternative = React.useCallback((slot: number, noyauxList: { id: number; statPrincipale: string; statSecondaire?: string }[]) => {
+  // Fonction pour sélectionner un noyau spécifique
+  const handleNoyauSelect = React.useCallback((slot: number, index: number) => {
     setActiveNoyauIndices((prev) => {
-      const newIndex = ((prev[slot] || 0) + 1) % noyauxList.length;
       const newIndices = {
         ...prev,
-        [slot]: newIndex,
+        [slot]: index,
       };
-      
+
       if (process.env.NODE_ENV === 'development') {
-        console.log(`🔄 ${COMPONENT_ID}: Slot ${slot} - Alternative ${newIndex + 1}/${noyauxList.length}`);
+        console.log(`🔄 ${COMPONENT_ID}: Slot ${slot} - Sélection ${index + 1}`);
       }
-      
+
       return newIndices;
     });
   }, [COMPONENT_ID]);
@@ -662,6 +661,35 @@ export default function BuildChasseurCard({
                       key={slot}
                       className="bg-sidebar p-2 sm:p-4 rounded-lg border border-sidebar-border"
                     >
+                      {/* Boutons de sélection des alternatives */}
+                      {noyauxList.length > 1 && (
+                        <div className="flex flex-wrap gap-1 mb-2 justify-center">
+                          {noyauxList.map((_, index) => {
+                            const isActive = activeIndex === index;
+                            const label = index === 0 ? "Meilleur" : `Alternative ${index}`;
+
+                            return (
+                              <button
+                                key={index}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleNoyauSelect(slotNumber, index);
+                                }}
+                                className={`
+                                  text-[10px] sm:text-2xs px-2 py-0.5 rounded font-medium transition-all
+                                  ${isActive
+                                    ? 'bg-solo-purple text-white border-2 border-solo-purple shadow-lg'
+                                    : 'bg-solo-purple/20 text-gray-300 border border-solo-purple/40 hover:bg-solo-purple/30'
+                                  }
+                                `}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
                       <div className="flex flex-col items-center mb-2">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center mb-1">
                           {isLoading ? (
@@ -696,17 +724,6 @@ export default function BuildChasseurCard({
                             <p key={idx}>{formatTextWithBrackets(line)}</p>
                           )) || "")}
                       </div>
-                      {noyauxList.length > 1 && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleNoyauAlternative(slotNumber, noyauxList);
-                          }}
-                          className="mt-1 bg-solo-purple/90 hover:bg-solo-purple text-white text-[10px] sm:text-2xs px-2 py-0.5 rounded text-center mx-auto block"
-                        >
-                          {(activeNoyauIndices[slotNumber] || 0) === 0 ? "Alternative" : "Meilleur"}
-                        </button>
-                      )}
                     </div>
                   );
                 })}

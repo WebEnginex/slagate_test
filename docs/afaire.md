@@ -1,6 +1,5 @@
 
 3️⃣ Ajouter une tier list globale
-4️⃣ Options de noyaux : afficher dans cet ordre → Meilleur, puis Alternative 1, Alternative 2, Alternative 3, etc.
 
 
 
@@ -9,6 +8,7 @@
 
 
 
+✅ Options de noyaux : afficher dans cet ordre → Meilleur, puis Alternative 1, Alternative 2, Alternative 3, etc.
 
 
 ✅ Changement d’image des noyaux

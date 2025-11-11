@@ -53,7 +53,7 @@ export type TeamBaranJinwoo = {
     //         "Force": "25000",
     //         "Vitalité": "30000",
     //         "Agilité": "1000",
-    //         "Intélligence": "15",
+    //         "Intelligence": "15",
     //         "Perception": "8000",
     //         "PV": "25000",
     //         "Attaque": "30000",

@@ -886,7 +886,7 @@ export default function BuildEditor({ chasseurData, referenceData, onSave, onDel
                     <h4 className="text-sm font-semibold">Attributs de Base</h4>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                    {['Force', 'Perception', 'Intélligence', 'Agilité', 'Vitalité'].map(stat => (
+                    {['Force', 'Perception', 'Intelligence', 'Agilité', 'Vitalité'].map(stat => (
                       <div key={stat} className="space-y-1">
                         <Label className="text-xs text-muted-foreground">{stat}</Label>
                         <Input

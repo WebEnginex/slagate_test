@@ -371,7 +371,7 @@ export default function BuildChasseurCard({
                 key: 'base',
                 label: 'Attributs de Base',
                 icon: <TrendingUp className="h-3.5 sm:h-4 w-3.5 sm:w-4 text-amber-400" />,
-                stats: ['Force', 'Perception', 'Intélligence', 'Agilité', 'Vitalité']
+                stats: ['Force', 'Perception', 'Intelligence', 'Agilité', 'Vitalité']
               },
               {
                 key: 'offensive',

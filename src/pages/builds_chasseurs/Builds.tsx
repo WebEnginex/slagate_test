@@ -503,14 +503,32 @@ export default function BuildsPage() {
     const matchSearch = chasseur.nom
       .toLowerCase()
       .includes(search.toLowerCase());
-    
+
     // Gestion spéciale pour Sung Jinwoo (pas d'élément)
-    const matchElement = !selectedElement || 
-      (selectedElement === "jinwoo" 
+    const matchElement = !selectedElement ||
+      (selectedElement === "jinwoo"
         ? chasseur.nom.toLowerCase().includes("sung jinwoo")
         : entry.element === selectedElement);
 
     return matchSearch && matchElement;
+  });
+
+  // Trier les builds : Sung Jinwoo en premier, puis par ID décroissant
+  const sortedBuilds = [...filteredBuilds].sort((a, b) => {
+    const chasseurA = chasseurIndex.get(a.chasseur_id);
+    const chasseurB = chasseurIndex.get(b.chasseur_id);
+
+    if (!chasseurA || !chasseurB) return 0;
+
+    const isJinwooA = chasseurA.nom.toLowerCase() === 'sung jinwoo';
+    const isJinwooB = chasseurB.nom.toLowerCase() === 'sung jinwoo';
+
+    // Si A est Jinwoo et B n'est pas Jinwoo, A vient en premier
+    if (isJinwooA && !isJinwooB) return -1;
+    // Si B est Jinwoo et A n'est pas Jinwoo, B vient en premier
+    if (!isJinwooA && isJinwooB) return 1;
+    // Sinon, tri par ID décroissant
+    return b.chasseur_id - a.chasseur_id;
   });
 
   // Debug pour voir les données
@@ -518,7 +536,7 @@ export default function BuildsPage() {
     console.log(`🔍 Debug filtrage:`, {
       buildsTotal: builds.length,
       chasseursTotal: chasseurs.length,
-      filteredBuilds: filteredBuilds.length,
+      filteredBuilds: sortedBuilds.length,
       search,
       selectedElement,
       chasseurIndexSize: chasseurIndex.size
@@ -625,7 +643,7 @@ export default function BuildsPage() {
 
             {/* Cartes des builds */}
             <div className="mt-6">
-              {filteredBuilds.map((entry) => {
+              {sortedBuilds.map((entry) => {
                 const chasseur = chasseurs.find(
                   (c) => c.id === entry.chasseur_id
                 );
@@ -660,9 +678,9 @@ export default function BuildsPage() {
                   />
                 );
               })}
-              
+
               {/* Afficher un message si aucun résultat n'est trouvé */}
-              {filteredBuilds.length === 0 && (
+              {sortedBuilds.length === 0 && (
                 <div className="bg-sidebar p-8 rounded-lg border border-sidebar-border text-center">
                   <p className="text-lg text-gray-300">
                     Aucun chasseur ne correspond à votre recherche.

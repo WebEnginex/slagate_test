@@ -48,6 +48,20 @@ export const ELEMENTS_ARME = [
 export type ElementArme = typeof ELEMENTS_ARME[number];
 
 /**
+ * Éléments pour les compétences de Jinwoo (inclut Bris en plus des éléments d'armes)
+ */
+export const ELEMENTS_COMPETENCE = [
+  'Feu',
+  'Eau',
+  'Vent',
+  'Lumière',
+  'Ténèbres',
+  'Bris'
+] as const;
+
+export type ElementCompetence = typeof ELEMENTS_COMPETENCE[number];
+
+/**
  * Éléments pour les teams chasseurs (minuscules)
  */
 export const ELEMENTS_TEAM = [
@@ -69,6 +83,7 @@ export const ELEMENT_ICONS: Record<string, string> = {
   'Vent': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Vent_element.webp',
   'Lumière': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Lumiere_element.webp',
   'Ténèbres': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Tenebre_element.webp',
+  'Bris': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/bris_elem.webp',
   // Versions minuscules pour compatibilité
   'feu': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Feu_element.webp',
   'eau': 'https://todwuewxymmybbunbclz.supabase.co/storage/v1/object/public/elements/Eau_element.webp',

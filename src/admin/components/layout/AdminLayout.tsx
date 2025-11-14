@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Menu, User, ChevronDown, Database, Users, Zap, Swords, LayoutDashboard, Trophy, Gift, Shield, Youtube, Ghost } from "lucide-react";
+import { Settings, LogOut, Menu, User, ChevronDown, Database, Users, Zap, Swords, LayoutDashboard, Trophy, Gift, Shield, Youtube, Ghost, Sparkles } from "lucide-react";
 import { useAuth } from "@/admin/auth/hooks/useAuth";
 import SideNav from "@/components/SideNav";
 
@@ -34,6 +34,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { to: "/admin/artefacts", label: "Artefacts", icon: <Shield className="h-4 w-4 mr-2" /> },
     { to: "/admin/noyaux", label: "Noyaux", icon: <Zap className="h-4 w-4 mr-2" /> },
     { to: "/admin/armes", label: "Armes", icon: <Swords className="h-4 w-4 mr-2" /> },
+    { to: "/admin/competences", label: "Compétences", icon: <Sparkles className="h-4 w-4 mr-2" /> },
     { to: "/admin/ombres", label: "Ombres", icon: <Ghost className="h-4 w-4 mr-2" /> },
     { to: "/admin/sets-bonus", label: "Sets Bonus", icon: <Database className="h-4 w-4 mr-2" /> },
   ];

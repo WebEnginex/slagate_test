@@ -28,6 +28,7 @@ const ChasseursAdmin = lazy(() => import("@/admin/pages/chasseurs"));
 const ArtefactsAdmin = lazy(() => import("@/admin/pages/artefacts"));
 const NoyauxAdmin = lazy(() => import("@/admin/pages/noyaux"));
 const ArmesAdmin = lazy(() => import("@/admin/pages/armes"));
+const CompetencesAdmin = lazy(() => import("@/admin/pages/jinwoo-competences"));
 const OmbresAdmin = lazy(() => import("@/admin/pages/ombres"));
 const YoutubeAdmin = lazy(() => import("@/admin/pages/youtube/YoutubeAdminPage"));
 const SetsBonusAdmin = lazy(() => import("@/admin/pages/sets-bonus"));
@@ -152,6 +153,14 @@ const App = () => (
             <AdminProtection>
               <Suspense fallback={<LoadingFallback />}>
                 <ArmesAdmin />
+              </Suspense>
+            </AdminProtection>
+          } />
+
+          <Route path="/admin/competences" element={
+            <AdminProtection>
+              <Suspense fallback={<LoadingFallback />}>
+                <CompetencesAdmin />
               </Suspense>
             </AdminProtection>
           } />

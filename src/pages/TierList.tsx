@@ -164,6 +164,11 @@ function GlobalHuntersTab() {
     async () => {
       const { PublicGlobalChasseursTierListService } = await import("@/services/public-global-chasseurs-tier-list-service");
       return PublicGlobalChasseursTierListService.getGlobalTierList();
+    },
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2000, // Réduire le cache à 2 secondes
     }
   );
 
@@ -252,12 +257,17 @@ function GlobalHuntersTab() {
 // Composant pour l'onglet des chasseurs - Affiche les tier lists du dashboard
 function HuntersTab() {
   const [activeCategory, setActiveCategory] = useState<"breakers" | "dps" | "supports" | "collab">("breakers");
-  
+
   const { data: tierListData, loading } = useSupabaseFetch(
     "chasseurs-tier-lists",
     async () => {
       const { PublicChasseursTierListService } = await import("@/services/public-chasseurs-tier-list-service");
       return PublicChasseursTierListService.getAllTierLists();
+    },
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2000, // Réduire le cache à 2 secondes
     }
   );
 
@@ -384,6 +394,11 @@ function WeaponsTab() {
     async () => {
       const { PublicArmesTierListService } = await import("@/services/public-armes-tier-list-service");
       return PublicArmesTierListService.getArmesTierList();
+    },
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 2000, // Réduire le cache à 2 secondes
     }
   );
 

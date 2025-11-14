@@ -10,7 +10,8 @@ import type {
   Rarete,
   CategorieArtefact,
   SlotNoyau,
-  ElementArme
+  ElementArme,
+  ElementCompetence
 } from './constants';
 
 // Réexporter les constantes depuis le fichier centralisé
@@ -24,6 +25,7 @@ export {
   CATEGORIE_ARTEFACT_ICONS,
   SLOTS_NOYAU as SLOT_NOYAU_VALUES,
   ELEMENTS_ARME as ELEMENT_ARME_VALUES,
+  ELEMENTS_COMPETENCE as ELEMENT_COMPETENCE_VALUES,
   ELEMENT_ICONS as ELEMENT_ARME_ICONS
 } from './constants';
 
@@ -36,7 +38,8 @@ export type {
   Rarete,
   CategorieArtefact,
   SlotNoyau,
-  ElementArme
+  ElementArme,
+  ElementCompetence
 } from './constants';
 
 // Types pour l'éditeur de builds
@@ -233,5 +236,36 @@ export interface CreateOmbreData {
 // Données pour mettre à jour une ombre (tous les champs optionnels)
 export interface UpdateOmbreData {
   nom?: string;
+  description?: string | null;
+}
+
+// ========================================
+// Types pour la gestion des compétences de Jinwoo
+// ========================================
+
+// Interface complète d'une compétence de Jinwoo
+export interface JinwooCompetence {
+  id: number;
+  nom: string;
+  image: string | null;
+  element: ElementCompetence | null;
+  element2: ElementCompetence | null;
+  description: string | null;
+  last_modified: string | null;
+}
+
+// Données pour créer une compétence
+export interface CreateCompetenceData {
+  nom: string;
+  element?: ElementCompetence | null;
+  element2?: ElementCompetence | null;
+  description?: string | null;
+}
+
+// Données pour mettre à jour une compétence (tous les champs optionnels)
+export interface UpdateCompetenceData {
+  nom?: string;
+  element?: ElementCompetence | null;
+  element2?: ElementCompetence | null;
   description?: string | null;
 }

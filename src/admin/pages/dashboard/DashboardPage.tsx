@@ -107,6 +107,17 @@ const DashboardPage: React.FC = () => {
           hoverColor: "group-hover:text-blue-400"
         },
         {
+          title: "Compétences",
+          description: "Créer et gérer les compétences de Sung Jinwoo",
+          icon: <Sparkles className="h-6 w-6" />,
+          to: "/admin/competences",
+          iconBg: "bg-blue-500/20",
+          iconColor: "text-blue-400",
+          borderColor: "border-blue-500/30",
+          buttonColor: "bg-blue-600 hover:bg-blue-700 text-white",
+          hoverColor: "group-hover:text-blue-400"
+        },
+        {
           title: "Ombres",
           description: "Créer et gérer les ombres de l'armée",
           icon: <Ghost className="h-6 w-6" />,

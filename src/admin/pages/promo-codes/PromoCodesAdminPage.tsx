@@ -44,11 +44,22 @@ const PromoCodesAdminPage: React.FC = () => {
   const [editingPromoCode, setEditingPromoCode] = useState<PromoCodeWithRewards | null>(null);
 
   // Form state
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    code: string;
+    expirationDate: string;
+    isPermanent: boolean;
+    rewards: Array<{
+      id?: string;
+      reward_name: string;
+      reward_quantity: number;
+      _tempId?: string; // ID temporaire pour React key
+      _toDelete?: boolean; // Marquer pour suppression
+    }>;
+  }>({
     code: '',
     expirationDate: '',
     isPermanent: false,
-    rewards: [{ reward_name: '', reward_quantity: 1 }]
+    rewards: [{ reward_name: '', reward_quantity: 1, _tempId: crypto.randomUUID() }]
   });
 
   useEffect(() => {
@@ -89,10 +100,28 @@ const PromoCodesAdminPage: React.FC = () => {
         return;
       }
 
+      // Filtrer les récompenses valides (nom non vide et quantité > 0)
+      const validRewards = formData.rewards
+        .filter(r => r.reward_name.trim() && r.reward_quantity > 0)
+        .map(r => ({
+          reward_name: r.reward_name.trim(),
+          reward_quantity: r.reward_quantity
+        }));
+
+      // Vérifier qu'il y a au moins une récompense valide
+      if (validRewards.length === 0) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez ajouter au moins une récompense valide",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const newPromoCode: CreatePromoCodeData = {
         code: formData.code.trim().toUpperCase(),
         expires_at: formData.isPermanent ? null : createExpirationDate(formData.expirationDate),
-        rewards: formData.rewards.filter(r => r.reward_name.trim() && r.reward_quantity > 0)
+        rewards: validRewards
       };
 
       const createdPromoCode = await PromoCodesService.createPromoCode(newPromoCode);
@@ -129,18 +158,20 @@ const PromoCodesAdminPage: React.FC = () => {
 
   const handleEditPromoCode = (promoCode: PromoCodeWithRewards) => {
     setEditingPromoCode(promoCode);
-    
+
     // Pré-remplir le formulaire avec les données existantes
     setFormData({
       code: promoCode.code,
       expirationDate: formatDateForInput(promoCode.expires_at),
       isPermanent: !promoCode.expires_at,
       rewards: promoCode.rewards.map(reward => ({
+        id: reward.id, // Conserver l'ID pour la mise à jour
         reward_name: reward.reward_name,
-        reward_quantity: reward.reward_quantity
+        reward_quantity: reward.reward_quantity,
+        _tempId: reward.id // Utiliser l'ID comme clé temporaire
       }))
     });
-    
+
     setIsCreateDialogOpen(true);
   };
 
@@ -168,10 +199,29 @@ const PromoCodesAdminPage: React.FC = () => {
         return;
       }
 
+      // Préparer les récompenses pour la mise à jour
+      const rewardsForUpdate = formData.rewards.map(r => ({
+        id: r.id, // Conserver l'ID si présent
+        reward_name: r.reward_name.trim(),
+        reward_quantity: r.reward_quantity,
+        _toDelete: r._toDelete // Conserver le flag de suppression
+      }));
+
+      // Vérifier qu'il y a au moins une récompense valide (non marquée pour suppression)
+      const validRewardsCount = rewardsForUpdate.filter(r => !r._toDelete && r.reward_name && r.reward_quantity > 0).length;
+      if (validRewardsCount === 0) {
+        toast({
+          title: "Erreur",
+          description: "Veuillez ajouter au moins une récompense valide",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const updateData = {
         code: formData.code.trim().toUpperCase(),
         expires_at: formData.isPermanent ? null : createExpirationDate(formData.expirationDate),
-        rewards: formData.rewards.filter(r => r.reward_name.trim() && r.reward_quantity > 0)
+        rewards: rewardsForUpdate
       };
 
       await PromoCodesService.updatePromoCode(editingPromoCode.id, updateData);
@@ -196,12 +246,12 @@ const PromoCodesAdminPage: React.FC = () => {
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 7);
     defaultDate.setHours(23, 59, 0, 0);
-    
+
     setFormData({
       code: '',
       expirationDate: formatDateForInput(defaultDate.toISOString()),
       isPermanent: false,
-      rewards: [{ reward_name: '', reward_quantity: 1 }]
+      rewards: [{ reward_name: '', reward_quantity: 1, _tempId: crypto.randomUUID() }]
     });
     setEditingPromoCode(null);
   };
@@ -209,21 +259,36 @@ const PromoCodesAdminPage: React.FC = () => {
   const addReward = () => {
     setFormData(prev => ({
       ...prev,
-      rewards: [...prev.rewards, { reward_name: '', reward_quantity: 1 }]
+      rewards: [...prev.rewards, { reward_name: '', reward_quantity: 1, _tempId: crypto.randomUUID() }]
     }));
   };
 
   const removeReward = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      rewards: prev.rewards.filter((_, i) => i !== index)
-    }));
+    setFormData(prev => {
+      const reward = prev.rewards[index];
+
+      // Si la récompense a un ID (existe en base), on la marque pour suppression
+      if (reward.id) {
+        return {
+          ...prev,
+          rewards: prev.rewards.map((r, i) =>
+            i === index ? { ...r, _toDelete: true } : r
+          )
+        };
+      } else {
+        // Sinon (nouvelle récompense), on la supprime du tableau
+        return {
+          ...prev,
+          rewards: prev.rewards.filter((_, i) => i !== index)
+        };
+      }
+    });
   };
 
   const updateReward = (index: number, field: 'reward_name' | 'reward_quantity', value: string | number) => {
     setFormData(prev => ({
       ...prev,
-      rewards: prev.rewards.map((reward, i) => 
+      rewards: prev.rewards.map((reward, i) =>
         i === index ? { ...reward, [field]: value } : reward
       )
     }));
@@ -309,7 +374,7 @@ const PromoCodesAdminPage: React.FC = () => {
                       type="datetime-local"
                       value={formData.expirationDate}
                       onChange={(e) => setFormData(prev => ({ ...prev, expirationDate: e.target.value }))}
-                      className="w-full"
+                      className="w-full [color-scheme:dark]"
                     />
                     <p className="text-xs text-gray-500">
                       Sélectionnez une date et heure d'expiration
@@ -319,9 +384,14 @@ const PromoCodesAdminPage: React.FC = () => {
               </div>
 
               {/* Récompenses */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label>Récompenses *</Label>
+                  <Label>
+                    Récompenses *
+                    <span className="text-xs text-muted-foreground ml-2">
+                      ({formData.rewards.filter(r => !r._toDelete).length} récompense{formData.rewards.filter(r => !r._toDelete).length > 1 ? 's' : ''})
+                    </span>
+                  </Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -332,45 +402,60 @@ const PromoCodesAdminPage: React.FC = () => {
                     Ajouter
                   </Button>
                 </div>
-                
-                {formData.rewards.map((reward, index) => (
-                  <div key={index} className="flex gap-2 items-end">
-                    <div className="flex-1">
-                      <Label htmlFor={`reward-name-${index}`} className="text-xs">
-                        Nom de la récompense
-                      </Label>
-                      <Input
-                        id={`reward-name-${index}`}
-                        value={reward.reward_name}
-                        onChange={(e) => updateReward(index, 'reward_name', e.target.value)}
-                        placeholder="Ex: Gold, Cristal abyssal"
-                      />
-                    </div>
-                    <div className="w-24">
-                      <Label htmlFor={`reward-quantity-${index}`} className="text-xs">
-                        Quantité
-                      </Label>
-                      <Input
-                        id={`reward-quantity-${index}`}
-                        type="number"
-                        min="1"
-                        value={reward.reward_quantity}
-                        onChange={(e) => updateReward(index, 'reward_quantity', parseInt(e.target.value) || 1)}
-                      />
-                    </div>
-                    {formData.rewards.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeReward(index)}
-                        className="text-red-500 hover:text-red-700"
+
+                {/* Conteneur avec scroll pour les récompenses */}
+                <div className="max-h-[300px] overflow-y-auto pr-2 space-y-3 border rounded-md p-3 bg-sidebar-accent/30">
+                  {formData.rewards.filter(r => !r._toDelete).map((reward, index) => {
+                    // Trouver l'index réel dans le tableau complet
+                    const realIndex = formData.rewards.findIndex(r =>
+                      (r._tempId && r._tempId === reward._tempId) ||
+                      (r.id && r.id === reward.id) ||
+                      r === reward
+                    );
+
+                    return (
+                      <div
+                        key={reward._tempId || reward.id || realIndex}
+                        className="flex gap-2 items-end bg-sidebar p-2 rounded-md border border-sidebar-border"
                       >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                        <div className="flex-1">
+                          <Label htmlFor={`reward-name-${realIndex}`} className="text-xs">
+                            Nom de la récompense
+                          </Label>
+                          <Input
+                            id={`reward-name-${realIndex}`}
+                            value={reward.reward_name}
+                            onChange={(e) => updateReward(realIndex, 'reward_name', e.target.value)}
+                            placeholder="Ex: Gold, Cristal abyssal"
+                          />
+                        </div>
+                        <div className="w-24">
+                          <Label htmlFor={`reward-quantity-${realIndex}`} className="text-xs">
+                            Quantité
+                          </Label>
+                          <Input
+                            id={`reward-quantity-${realIndex}`}
+                            type="number"
+                            min="1"
+                            value={reward.reward_quantity}
+                            onChange={(e) => updateReward(realIndex, 'reward_quantity', parseInt(e.target.value) || 1)}
+                          />
+                        </div>
+                        {formData.rewards.filter(r => !r._toDelete).length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeReward(realIndex)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

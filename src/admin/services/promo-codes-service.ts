@@ -75,6 +75,12 @@ export class PromoCodesService {
    */
   static async createPromoCode(data: CreatePromoCodeData): Promise<PromoCodeWithRewards> {
     try {
+      // Validation : vérifier qu'il y a au moins une récompense valide
+      const validRewards = data.rewards.filter(r => r.reward_name.trim() && r.reward_quantity > 0);
+      if (validRewards.length === 0) {
+        throw new Error('Au moins une récompense valide est requise');
+      }
+
       // 1. Créer le code promo
       const { data: promoCode, error: promoError } = await supabase
         .from('promo_codes')
@@ -89,8 +95,8 @@ export class PromoCodesService {
         throw new Error(`Erreur lors de la création du code promo: ${promoError.message}`);
       }
 
-      // 2. Créer les récompenses
-      const rewardsToInsert = data.rewards.map(reward => ({
+      // 2. Créer les récompenses (uniquement les valides)
+      const rewardsToInsert = validRewards.map(reward => ({
         promo_code_id: promoCode.id,
         reward_name: reward.reward_name.trim(),
         reward_quantity: reward.reward_quantity
@@ -122,33 +128,37 @@ export class PromoCodesService {
    */
   static async updatePromoCode(id: string, data: UpdatePromoCodeData): Promise<PromoCodeWithRewards> {
     try {
-      // 1. Mettre à jour le code promo de base
+      // 1. Mettre à jour le code promo de base (seulement si des champs sont fournis)
       const updateData: Database['public']['Tables']['promo_codes']['Update'] = {};
       if (data.code !== undefined) updateData.code = data.code.toUpperCase().trim();
       if (data.expires_at !== undefined) updateData.expires_at = data.expires_at;
 
-      const { data: promoCode, error: promoError } = await supabase
-        .from('promo_codes')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
+      // Ne faire l'UPDATE que si on a des données à mettre à jour
+      if (Object.keys(updateData).length > 0) {
+        const { error: promoError } = await supabase
+          .from('promo_codes')
+          .update(updateData)
+          .eq('id', id);
 
-      if (promoError) {
-        throw new Error(`Erreur lors de la mise à jour du code promo: ${promoError.message}`);
+        if (promoError) {
+          throw new Error(`Erreur lors de la mise à jour du code promo: ${promoError.message}`);
+        }
       }
 
       // 2. Gérer les récompenses si fournies
       if (data.rewards) {
+        // Filtrer les récompenses valides (nom non vide et quantité > 0)
+        const validRewards = data.rewards.filter(r => r.reward_name.trim() && r.reward_quantity > 0);
+
         // Supprimer les récompenses marquées pour suppression
-        const rewardsToDelete = data.rewards.filter(r => r._toDelete && r.id);
+        const rewardsToDelete = validRewards.filter(r => r._toDelete && r.id);
         if (rewardsToDelete.length > 0) {
           const deleteIds = rewardsToDelete.map(r => r.id!);
           await supabase.from('promo_code_rewards').delete().in('id', deleteIds);
         }
 
-        // Mettre à jour les récompenses existantes
-        const rewardsToUpdate = data.rewards.filter(r => r.id && !r._toDelete);
+        // Mettre à jour les récompenses existantes (avec nom valide)
+        const rewardsToUpdate = validRewards.filter(r => r.id && !r._toDelete);
         for (const reward of rewardsToUpdate) {
           await supabase
             .from('promo_code_rewards')
@@ -159,8 +169,8 @@ export class PromoCodesService {
             .eq('id', reward.id!);
         }
 
-        // Créer les nouvelles récompenses
-        const newRewards = data.rewards.filter(r => !r.id && !r._toDelete);
+        // Créer les nouvelles récompenses (uniquement celles sans ID et valides)
+        const newRewards = validRewards.filter(r => !r.id && !r._toDelete);
         if (newRewards.length > 0) {
           const rewardsToInsert = newRewards.map(reward => ({
             promo_code_id: id,

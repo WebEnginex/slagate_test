@@ -61,9 +61,17 @@ export const formatReward = (rewardName: string, quantity: number): string => {
 export const formatPromoCodesForPublic = (promoCodesWithRewards: PromoCodeWithRewards[]): PublicPromoCode[] => {
   return promoCodesWithRewards.map(promoCode => ({
     code: promoCode.code,
-    rewards: promoCode.rewards.map(reward => 
-      formatReward(reward.reward_name, reward.reward_quantity)
-    ),
+    rewards: promoCode.rewards
+      // Filtrer les récompenses invalides (nom vide, "Inconnu", quantité <= 0)
+      .filter(reward =>
+        reward.reward_name &&
+        reward.reward_name.trim() !== '' &&
+        reward.reward_name.trim().toLowerCase() !== 'inconnu' &&
+        reward.reward_quantity > 0
+      )
+      .map(reward =>
+        formatReward(reward.reward_name, reward.reward_quantity)
+      ),
     date: formatExpirationDate(promoCode.expires_at)
   }));
 };

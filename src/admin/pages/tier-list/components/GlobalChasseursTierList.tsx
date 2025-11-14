@@ -12,8 +12,6 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
-  horizontalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -403,13 +401,7 @@ export const GlobalChasseursTierList: React.FC = () => {
         {/* Tiers */}
         <div className="space-y-4">
           {tiers.map((tier) => (
-            <SortableContext
-              key={tier.rank}
-              items={tier.chasseurs.map(c => `tier-${tier.rank}-${c.id}`)}
-              strategy={horizontalListSortingStrategy}
-            >
-              <ChasseurTierRow tier={tier} />
-            </SortableContext>
+            <ChasseurTierRow key={tier.rank} tier={tier} />
           ))}
         </div>
 

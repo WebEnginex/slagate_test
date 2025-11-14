@@ -12,7 +12,6 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
-  horizontalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -543,15 +542,10 @@ export const ChasseursTierList: React.FC = () => {
               {/* Tier List */}
               <div className="space-y-4">
                 {category.tiers.map(tier => (
-                  <SortableContext
+                  <ChasseurTierRow
                     key={tier.rank}
-                    items={tier.chasseurs.map(c => c.id)}
-                    strategy={horizontalListSortingStrategy}
-                  >
-                    <ChasseurTierRow
-                      tier={tier}
-                    />
-                  </SortableContext>
+                    tier={tier}
+                  />
                 ))}
               </div>
 

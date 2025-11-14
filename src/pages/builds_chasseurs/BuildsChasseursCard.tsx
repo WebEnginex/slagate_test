@@ -529,47 +529,67 @@ export default function BuildChasseurCard({
 
                   return (
                     <div key="bottes" className="bg-sidebar p-2 sm:p-3 rounded-lg border border-sidebar-border">
-                      <div className="flex flex-col items-center">
+                      {/* Boutons de sélection des alternatives */}
+                      {statsArray.length > 1 && (
+                        <div className="flex flex-wrap gap-1 mb-2 justify-center">
+                          {statsArray.map((_, index) => {
+                            const isActive = statIndex === index;
+                            const label = index === 0 ? "Meilleur" : `Alternative ${index}`;
+
+                            return (
+                              <button
+                                key={index}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveBootIndex(index);
+                                }}
+                                className={`
+                                  text-[10px] sm:text-2xs px-2 py-0.5 rounded font-medium transition-all
+                                  ${isActive
+                                    ? 'bg-solo-purple text-white border-2 border-solo-purple shadow-lg'
+                                    : 'bg-solo-purple/20 text-gray-300 border border-solo-purple/40 hover:bg-solo-purple/30'
+                                  }
+                                `}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      <div className="flex flex-col items-center mb-2">
                         <p className="mb-1 text-[10px] sm:text-2xs font-semibold text-solo-light-purple">Bottes</p>
-                        {isLoading ? (
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-gray-800 rounded animate-pulse flex items-center justify-center">
-                            <div className="w-4 h-4 border-2 border-solo-purple border-t-transparent rounded-full animate-spin"></div>
-                          </div>
-                        ) : notFound || bottesConf.id === undefined ? (
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center bg-gray-900 rounded">
-                            <span className="text-xs text-red-400">{errorMsg || 'Bottes inconnues'}</span>
-                          </div>
-                        ) : (
-                          <LazyImage
-                            key={`artefact-bottes-${bottesConf.id}-${renderKey}`}
-                            src={artefact?.image || ""}
-                            className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto object-contain"
-                            alt={artefact?.nom || "Artefact"}
-                            fallbackClassName="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto bg-transparent"
-                            showSpinner={true}
-                          />
-                        )}
-                        <p className="mt-1 text-[10px] sm:text-2xs font-medium text-center text-white truncate w-full">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center mb-1">
+                          {isLoading ? (
+                            <div className="w-full h-full bg-gray-800 rounded animate-pulse flex items-center justify-center">
+                              <div className="w-4 h-4 border-2 border-solo-purple border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          ) : notFound || bottesConf.id === undefined ? (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-900 rounded">
+                              <span className="text-xs text-red-400">{errorMsg || 'Bottes inconnues'}</span>
+                            </div>
+                          ) : (
+                            <LazyImage
+                              key={`artefact-bottes-${bottesConf.id}-${renderKey}`}
+                              src={artefact?.image || ""}
+                              className="w-full h-full object-contain"
+                              alt={artefact?.nom || "Artefact"}
+                              fallbackClassName="w-full h-full object-contain bg-transparent"
+                              showSpinner={true}
+                            />
+                          )}
+                        </div>
+                        <p className="text-[10px] sm:text-2xs font-medium text-center text-white truncate w-full">
                           {isLoading
                             ? 'Chargement...'
                             : notFound || bottesConf.id === undefined
                               ? errorMsg
                               : artefact?.nom}
                         </p>
-                        <div className="w-full mt-1">
-                          <div className="text-[10px] sm:text-2xs bg-solo-purple/20 text-white px-1 py-0.5 rounded font-medium text-center truncate">
-                            {statsArray[statIndex] || '-'}
-                          </div>
-                        </div>
-                        {/* Le bouton n'est affiché que s'il y a plusieurs stats alternatives */}
-                        {statsArray.length > 1 ? (
-                          <button
-                            onClick={() => setActiveBootIndex((prev) => (prev + 1) % statsArray.length)}
-                            className="mt-2 bg-solo-purple/90 hover:bg-solo-purple text-white text-[10px] sm:text-2xs px-2 py-0.5 rounded text-center mx-auto block"
-                          >
-                            {statIndex === 0 ? "Alternative" : "Meilleur"}
-                          </button>
-                        ) : null}
+                      </div>
+                      <div className="text-[10px] sm:text-2xs bg-solo-purple/20 text-white px-1 py-0.5 rounded font-medium text-center truncate">
+                        {statsArray[statIndex] || '-'}
                       </div>
                     </div>
                   );
@@ -579,40 +599,50 @@ export default function BuildChasseurCard({
                 const isLoading = !artefact && (artefacts.length === 0 || isDataLoading);
                 const notFound = !artefact && artefacts.length > 0;
                 const conf = Array.isArray(confData) ? confData[0] : confData;
+
+                // Vérifier si les bottes ont des alternatives pour maintenir l'alignement
+                const bottesData = build.artefacts['bottes'] as ArtefactConfWithAlternatives;
+                const bottesHasAlternatives = bottesData?.stats && bottesData.stats.length > 1;
+
                 return (
                   <div key={slot} className="bg-sidebar p-2 sm:p-3 rounded-lg border border-sidebar-border">
-                    <div className="flex flex-col items-center">
+                    {/* Espace réservé pour aligner avec les bottes qui ont des boutons d'alternatives */}
+                    {bottesHasAlternatives && (
+                      <div className="h-[26px] mb-2" aria-hidden="true"></div>
+                    )}
+
+                    <div className="flex flex-col items-center mb-2">
                       <p className="mb-1 text-[10px] sm:text-2xs font-semibold text-solo-light-purple">{slot.charAt(0).toUpperCase() + slot.slice(1)}</p>
-                      {isLoading ? (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-gray-800 rounded animate-pulse flex items-center justify-center">
-                          <div className="w-4 h-4 border-2 border-solo-purple border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                      ) : notFound ? (
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center bg-gray-900 rounded">
-                          <span className="text-xs text-gray-400">Artefact inconnu</span>
-                        </div>
-                      ) : (
-                        <LazyImage
-                          key={`artefact-${slot}-${conf.id}-${renderKey}`}
-                          src={artefact?.image || ""}
-                          className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto object-contain"
-                          alt={artefact?.nom || "Artefact"}
-                          fallbackClassName="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto bg-transparent"
-                          showSpinner={true}
-                        />
-                      )}
-                      <p className="mt-1 text-[10px] sm:text-2xs font-medium text-center text-white truncate w-full">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center mb-1">
+                        {isLoading ? (
+                          <div className="w-full h-full bg-gray-800 rounded animate-pulse flex items-center justify-center">
+                            <div className="w-4 h-4 border-2 border-solo-purple border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        ) : notFound ? (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-900 rounded">
+                            <span className="text-xs text-gray-400">Artefact inconnu</span>
+                          </div>
+                        ) : (
+                          <LazyImage
+                            key={`artefact-${slot}-${conf.id}-${renderKey}`}
+                            src={artefact?.image || ""}
+                            className="w-full h-full object-contain"
+                            alt={artefact?.nom || "Artefact"}
+                            fallbackClassName="w-full h-full object-contain bg-transparent"
+                            showSpinner={true}
+                          />
+                        )}
+                      </div>
+                      <p className="text-[10px] sm:text-2xs font-medium text-center text-white truncate w-full">
                         {isLoading
                           ? "Chargement..."
                           : notFound
                             ? `ID: ${conf.id} (introuvable)`
                             : artefact?.nom}
                       </p>
-                      <div className="w-full mt-1">
-                        <div className="text-[10px] sm:text-2xs bg-solo-purple/20 text-white px-1 py-0.5 rounded font-medium text-center truncate">
-                          {conf.statPrincipale}
-                        </div>
-                      </div>
+                    </div>
+                    <div className="text-[10px] sm:text-2xs bg-solo-purple/20 text-white px-1 py-0.5 rounded font-medium text-center truncate">
+                      {conf.statPrincipale}
                     </div>
                   </div>
                 );
